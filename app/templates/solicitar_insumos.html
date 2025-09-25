@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Solicitar Insumos{% endblock %}
+{% block content %}
+<div class="menu-container">
+    <h1>Solicitar Insumos</h1>
+    <form method="get" action="{{ url_for('solicitar_insumos') }}">
+        <input type="text" name="filtro" placeholder="Buscar insumo..." value="{{ filtro }}">
+        <button type="submit">Filtrar</button>
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Descripción</th>
+                <th>Stock</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for insumo in insumos %}
+            <tr>
+                <td>{{ insumo.codigo_producto }}</td>
+                <td>{{ insumo.descripcion }}</td>
+                <td>{{ insumo.stock_actual }}</td>
+                <td>
+                    <a href="{{ url_for('form_solicitar_insumos', insumo_id=insumo.id) }}">
+                        <button type="button" class="btn">Solicitar</button>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <a class="btn-link" href="{{ url_for('index') }}">Volver al menú</a>
+</div>
+{% endblock %}

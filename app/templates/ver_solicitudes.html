@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Solicitudes Pendientes{% endblock %}
+{% block content %}
+<div class="page-container">
+    <h1>Solicitudes Pendientes</h1>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Insumo</th>
+                    <th>Solicitante</th>
+                    <th>Dependencia</th>
+                    <th>Cantidad</th>
+                    <th>Observaciones</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for solicitud in solicitudes %}
+                <tr>
+                    <td>{{ solicitud.fecha_solicitud }}</td>
+                    <td>{{ solicitud.insumo.descripcion }}</td>
+                    <td>{{ solicitud.usuario.nombre }}</td>
+                    <td>{{ solicitud.usuario.dependencia }}</td>
+                    <td>{{ solicitud.cantidad_solicitada }}</td>
+                    <td>{{ solicitud.observaciones }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('entregar_solicitud', solicitud_id=solicitud.id_solicitud) }}">
+                            <input type="number" name="cantidad_entregada" min="1" max="{{ solicitud.cantidad_solicitada }}" value="{{ solicitud.cantidad_solicitada }}" required>
+                            <button type="submit" class="btn">Entregar</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <a class="btn-link" href="{{ url_for('index') }}">Volver al menú</a>
+    </div>
+</div>    
+{% endblock %}

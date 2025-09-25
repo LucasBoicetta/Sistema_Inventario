@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Menú de Opciones{% endblock %}
+{% block content %}
+<div class="user-menu">
+    <span>👤 {{ current_user.nombre }}</span>
+    <a href="{{ url_for('cambiar_contraseña') }}">Cambiar contraseña</a>
+    <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+</div>
+
+<div class="menu-container">
+    <div class="logo-container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+        
+    </div>
+    <h1>Menú de Opciones</h1>
+    <ul>
+        {% if current_user.is_authenticated and current_user.rol== 'admin' %}
+            <li><a href="{{ url_for('consultar_inventario') }}">Consultar Inventario</a></li>
+            <li><a href="{{ url_for('cargar_insumos') }}">Cargar Insumos</a></li>
+            <li><a href="{{ url_for('entrada_insumos') }}">Entrada Insumos</a></li>
+            <li><a href="{{ url_for('solicitar_insumos') }}">Solicitar Insumos</a></li>
+            <li><a href="{{ url_for('ver_solicitudes') }}">Ver Solicitudes</a></li>
+            <li><a href="{{ url_for('salida_insumos') }}">Salida Insumos</a></li>
+         {% else %}
+            <li><a href="{{ url_for('solicitar_insumos') }}">Solicitar Insumos</a></li>
+            <li><a href="{{ url_for('ver_solicitudes') }}">Ver Solicitudes</a></li>
+        {% endif %}    
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Salidas de Insumos{% endblock %}
+{% block content %}
+<div class="page-container">
+    <h1>Salidas de Insumos</h1>
+    <form method="get" action="{{ url_for('salida_insumos') }}">
+    <input type="text" name="filtro" placeholder="Buscar por fecha, insumo, solicitante o dependencia" value="{{ filtro }}">
+    <button type="submit">Filtrar</button>
+</form>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Codigo</th>
+                    <th>Insumo</th>
+                    <th>Solicitante</th>
+                    <th>Dependencia</th>
+                    <th>Cantidad Entregada</th>
+                    <th>Cantidad Solicitada</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for salida in salidas %}
+                <tr>
+                    <td>{{ salida.fecha_salida }}</td>
+                    <td>{{ salida.insumo.codigo_producto}}</td>
+                    <td>{{ salida.insumo.descripcion }}</td>
+                    <td>{{ salida.usuario.nombre}}</td>
+                    <td>{{ salida.usuario.dependencia }}</td>
+                    <td>{{ salida.cantidad_entregada }}</td>
+                    <td>{{ salida.cantidad_solicitada}}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="volver-container">
+    <a class="btn-link" href="{{ url_for('index') }}">Volver al menú</a>
+</div>
+{% endblock %}

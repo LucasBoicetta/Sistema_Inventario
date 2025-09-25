@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Cargar Insumos{% endblock %}
+{% block content %}
+<div class="form-container">
+    <h2>Cargar Insumo</h2>
+    <form method="post">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.codigo_producto.label }}<br>
+            {{ form.codigo_producto(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.descripcion.label }}<br>
+            {{ form.descripcion(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.cantidad_entradas.label }}<br>
+            {{ form.cantidad_entradas(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.proveedor.label }}<br>
+            {{ form.proveedor(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.submit(class="btn") }}
+        </div>
+    </form>
+    <a class="btn-link" href="{{ url_for('index') }}">Volver al menú</a>
+</div>
+{% endblock %}

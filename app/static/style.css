@@ -1,0 +1,229 @@
+
+body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        }
+        /* Para el menú principal */
+        .menu-container {
+            background-color: #fff;
+            padding: 40px 48px 32px 48px;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+            max-width: 480px;
+            width: 100%;
+            margin: 60px auto;
+        }
+        /* Para páginas con tablas grandes */
+       .table-container {
+            background-color: #fff;
+            padding: 32px 32px 24px 32px;
+            border-radius: 16px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+            max-width: 1100px;
+            width: 100%;
+            margin: 60px auto;
+            overflow-x: auto;
+            /* NUEVO: Altura máxima y scroll vertical */
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        /* Para formularios */
+        .form-container {
+            background: #fff;
+            padding: 32px 32px 24px 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+            max-width: 400px;
+            margin: 40px auto;
+        }
+        .menu-container h1 {
+            margin-bottom: 32px;
+            color: #222;
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .menu-container ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-container li {
+            margin-bottom: 22px;
+        }
+
+        .menu-container a {
+            text-decoration: none;
+            color: #1976d2;
+            font-size: 1.25rem;
+            display: block;
+            padding: 14px 0 14px 8px;
+            border-radius: 6px;
+            transition: background-color 0.2s, color 0.2s;
+            font-weight: 500;
+        }
+
+        .menu-container a:hover {
+            background-color: #e3eafc;
+            color: #0d47a1;
+        }
+
+        .menu-container a:active {
+            background-color: #cfd8dc;
+            color: #0d47a1;
+        }
+
+        .logo {
+            width: 400px;
+            height: auto;
+            margin-bottom: 1.2rem;
+            display: block;
+        }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+
+/* Tabla de insumos */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 32px 0 16px 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    overflow: hidden;
+}
+th, td {
+    padding: 14px 18px;
+    text-align: left;
+}
+th {
+    background-color: #f2f2f2;
+    color: #333;
+    font-weight: 600;
+}
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+tr:hover {
+    background-color: #e9ecef;
+}
+button[type="button"], .btn, .btn-link {
+    background: none;
+    color: #1976d2;
+    opacity: 0.7;              /* Más transparente */
+    border: none;
+    font-size: 1.1rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 18px;
+    display: inline-block;
+    transition: color 0.2s, opacity 0.2s;
+}
+button[type="button"]:hover, .btn:hover, .btn-link:hover {
+    color: #0d47a1;
+    opacity: 1;                /* Opaco al pasar el mouse */
+    background: none;
+}
+.form-container {
+    background: #fff;
+    padding: 32px 32px 24px 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+    max-width: 400px;
+    margin: 40px auto;
+}
+.form-group {
+    margin-bottom: 18px;
+}
+.form-control {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}        
+
+/* Mensajes Flash */
+.flashes {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    top: 100px;
+    right: 40px;
+    z-index: 1000;
+    max-width: 350px;
+}
+
+.flash {
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    opacity: 0.97;
+    transition: opacity 0.3s;
+}
+.flash.success {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+.flash.danger, .flash.error {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.table-scroll {
+    max-height: 400px;   /* Ajusta la altura según prefieras */
+    overflow-y: auto;
+    margin-top: 18px;
+}
+
+.volver-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: -50px;
+}
+
+.user-menu {
+    position: absolute;
+    top: 30px;
+    right: 60px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    padding: 12px 24px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    font-size: 1.08rem;
+    z-index: 10;
+}
+.user-menu a {
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 10px;
+}
+.user-menu a:hover {
+    text-decoration: underline;
+    color: #0d47a1;
+}

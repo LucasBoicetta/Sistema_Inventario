@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Cargar Existencias Iniciales{% endblock %}
+{% block content %}
+<div class="form-container">
+    <h2>Cargar Existencias Iniciales (Inicio de Año)</h2>
+    <form method="post">
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th>Existencias Iniciales</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for insumo in insumos %}
+                <tr>
+                    <td>{{ insumo.codigo_producto }}</td>
+                    <td>{{ insumo.descripcion }}</td>
+                    <td>
+                        <input type="number" name="existencias_{{ insumo.id }}" value="{{ insumo.existencias_iniciales_anio or 0 }}" min="0" required>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn">Guardar</button>
+    </form>
+</div>
+{% endblock %}

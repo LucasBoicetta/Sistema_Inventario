@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Consultar Inventario{% endblock %}
+{% block content %}
+<div class="table-container">
+    <h1>Inventario de Insumos</h1>
+    <form method="get" action="{{ url_for('consultar_inventario') }}">
+        <input type="text" name="filtro" placeholder="Buscar insumo..." value="{{ filtro }}">
+        <button type="submit">Filtrar</button>
+    </form>
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th>Existencias Iniciales</th>
+                    <th>Entradas</th>
+                    <th>Salidas</th>
+                    <th>Porcentaje Utilizado</th>
+                    <th>Stock Actual</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for insumo in insumos %}
+                <tr>
+                    <td>{{ insumo.codigo_producto }}</td>
+                    <td>{{ insumo.descripcion }}</td>
+                    <td>{{ insumo.existencias_iniciales_anio}}</td>
+                    <td>{{insumo.cantidad_entradas}}</td>
+                    <td>{{insumo.cantidad_salidas}}</td>
+                    <td>{{insumo.porcentaje_utilizado}}</td>
+                    <td>{{ insumo.stock_actual }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="volver-container">
+    <a class="btn-link" href="{{ url_for('index') }}">Volver al menú</a>
+</div>
+{% endblock %}

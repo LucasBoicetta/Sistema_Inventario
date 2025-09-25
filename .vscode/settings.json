@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "inventario",
+            "database": "${workspaceFolder:SistemaInventario-SGQ}/app/app.db"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}

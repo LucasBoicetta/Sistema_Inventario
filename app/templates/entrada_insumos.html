@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Entradas de Insumos{% endblock %}
+{% block content %}
+<div class="page-container">
+    <h1>Entradas de Insumos</h1>
+    <form method="get" action="{{ url_for('entrada_insumos') }}">
+    <input type="text" name="filtro" placeholder="Buscar por fecha, proveedor o código..." value="{{ filtro }}">
+    <button type="submit">Filtrar</button>
+    </form>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Código</th>
+                    <th>Descripción</th>
+                    <th>Proveedor</th>
+                    <th>Cantidad</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for entrada in entradas %}
+                <tr>
+                    <td>{{ entrada.fecha_entrada }}</td>
+                    <td>{{ entrada.insumo.codigo_producto }}</td>
+                    <td>{{ entrada.insumo.descripcion }}</td>
+                    <td>{{ entrada.proveedor }}</td>
+                    <td>{{ entrada.cantidad }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>    
+<div class="volver-container">
+    <a class="btn-link" href="{{ url_for('index') }}">Volver al menú</a>
+</div>
+{% endblock %}
