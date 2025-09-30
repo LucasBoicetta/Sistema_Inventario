@@ -4,8 +4,8 @@
 <div class="page-container">
     <h1>Entradas de Insumos</h1>
     <form method="get" action="{{ url_for('entrada_insumos') }}">
-    <input type="text" name="filtro" placeholder="Buscar por fecha, proveedor o código..." value="{{ filtro }}">
-    <button type="submit">Filtrar</button>
+    <input type="text" name="filtro"class="filtro-input" placeholder="Buscar por fecha, proveedor o código..." value="{{ filtro }}">
+    <button type="submit" class="btn-filtrar filtro-btn">Filtrar</button>
     </form>
     <div class="table-container">
         <table>

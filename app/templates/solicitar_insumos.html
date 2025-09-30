@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Solicitar Insumos{% endblock %}
 {% block content %}
 <div class="menu-container">
     <h1>Solicitar Insumos</h1>
     <form method="get" action="{{ url_for('solicitar_insumos') }}">
-        <input type="text" name="filtro" placeholder="Buscar insumo..." value="{{ filtro }}">
-        <button type="submit">Filtrar</button>
+        <input type="text" name="filtro" class="filtro-input" placeholder="Buscar insumo..." value="{{ filtro }}">
+        <button type="submit" class="btn-filtrar filtro-btn">Filtrar</button>
     </form>
     <table>
         <thead>
@@ -23,14 +22,17 @@
                 <td>{{ insumo.descripcion }}</td>
                 <td>{{ insumo.stock_actual }}</td>
                 <td>
-                    <a href="{{ url_for('form_solicitar_insumos', insumo_id=insumo.id) }}">
-                        <button type="button" class="btn">Solicitar</button>
-                    </a>
+                    <form method="post" action="{{ url_for('agregar_insumos', insumo_id=insumo.id) }}">
+                        <button type="submit" class="btn-agregar">Agregar</button>
+                    </form>
                 </td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
+    <br>
+    <a class="btn-link" href="{{ url_for('confirmar_solicitud_insumos') }}">Solicitar</a>
+    <br>
     <a class="btn-link" href="{{ url_for('index') }}">Volver al menú</a>
 </div>
 {% endblock %}

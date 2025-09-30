@@ -23,7 +23,7 @@
 
 <script>
   setTimeout(function() {
-    document.querySelectorAll('.flash').forEach(function(el) {
+    document.querySelectorAll('.flash:not(.success)').forEach(function(el) {
       el.style.opacity = '0';
       setTimeout(function(){ el.style.display = 'none'; }, 600);
     });

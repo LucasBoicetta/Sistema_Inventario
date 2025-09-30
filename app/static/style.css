@@ -146,6 +146,11 @@ button[type="button"]:hover, .btn:hover, .btn-link:hover {
     max-width: 400px;
     margin: 40px auto;
 }
+.form-container .btn-link {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+}
 .form-group {
     margin-bottom: 18px;
 }
@@ -200,7 +205,7 @@ button[type="button"]:hover, .btn:hover, .btn-link:hover {
     width: 100%;
     display: flex;
     justify-content: center;
-    margin-top: -50px;
+    margin-top: -25px;
 }
 
 .user-menu {
@@ -226,4 +231,116 @@ button[type="button"]:hover, .btn:hover, .btn-link:hover {
 .user-menu a:hover {
     text-decoration: underline;
     color: #0d47a1;
+}
+
+/* Botón verde para "Agregar" */
+.btn-agregar {
+    background-color: #43a047;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 6px rgba(67,160,71,0.08);
+    margin-top: 0;
+    margin-bottom: 0;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-agregar:hover, .btn-agregar:focus {
+    background-color: #388e3c;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(67,160,71,0.15);
+}
+
+.btn-eliminar {
+    background-color: #e53935;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 6px rgba(229,57,53,0.08);
+    margin: 0;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-eliminar:hover, .btn-eliminar:focus {
+    background-color: #b71c1c;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(229,57,53,0.15);
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #1976d2;
+    font-size: 1rem;
+    text-decoration: underline;
+    cursor: pointer;
+    margin: 0 10px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    display: inline-block;
+}
+
+.btn-link:hover, .btn-link:focus {
+    background: #e3eafc;
+    color: #0d47a1;
+}
+
+.filtro-form {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 18px;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.filtro-input {
+    padding: 8px 14px;
+    border: 1.5px solid #bdbdbd;
+    border-radius: 6px;
+    font-size: 1.08rem;
+    transition: border-color 0.2s;
+    outline: none;
+    width: 220px;
+    background: #f7fafc;
+}
+
+.filtro-input:focus {
+    border-color: #1976d2;
+    background: #fff;
+}
+
+.filtro-btn {
+    min-width: 90px;
+    padding: 8px 18px;
+    font-size: 1.08rem;
+    font-weight: 600;
+}
+
+.btn-filtrar {
+    background-color: #1976d2;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+    font-size: 1.08rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 6px rgba(25,118,210,0.08);
+    margin: 0;
+    text-decoration: none;
+    display: inline-block;
 }

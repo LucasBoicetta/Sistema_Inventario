@@ -1,7 +1,7 @@
 from app import app, db
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, session
 from flask_login import current_user, login_user, logout_user, login_required
-from app.forms import CargarInsumoForm, SolicitarInsumoForm,LoginForm
+from app.forms import CargarInsumoForm,LoginForm
 from app.models import Insumo, EntradaInsumo, SalidaInsumo, SolicitudInsumo, User
 from app.decorators import admin_required
 from sqlalchemy import or_
@@ -78,27 +78,6 @@ def solicitar_insumos():
         insumos = Insumo.query.all()
     return render_template('solicitar_insumos.html', insumos=insumos, filtro=filtro)
 
-
-@app.route('/form_solicitar_insumos/<int:insumo_id>', methods=['GET', 'POST'])
-@login_required
-def form_solicitar_insumos(insumo_id):
-    insumo = Insumo.query.get_or_404(insumo_id)
-    form = SolicitarInsumoForm()
-    if form.validate_on_submit():
-        if form.cantidad_solicitada.data>insumo.stock_actual:
-            flash('La cantidad solicitada no puede ser mayor al stock actual.', 'danger')
-            return redirect(url_for('solicitar_insumos'))
-        nueva_solicitud = SolicitudInsumo(
-            usuario_id=current_user.id_usuario,
-            cantidad_solicitada=form.cantidad_solicitada.data,
-            estado="pendiente",
-            insumo_id=insumo.id
-        )
-        db.session.add(nueva_solicitud)
-        db.session.commit()
-        flash('Solicitud de insumo creada con éxito.', 'success')
-        return redirect(url_for('index'))
-    return render_template('form_solicitar_insumo.html', form=form, insumo=insumo)
 
 @app.route('/ver_solicitudes', methods=['GET'])
 @login_required
@@ -228,6 +207,81 @@ def logout():
     logout_user()
     flash('Sesión cerrada','info')
     return redirect(url_for('login'))
+
+#Nuevo sistema de solicitar insumos.
+
+@app.route('/agregar_insumos/<int:insumo_id>', methods=['POST'])
+@login_required
+def agregar_insumos(insumo_id):
+    lista=session.get('lista_solicitudes', [])
+    insumo=Insumo.query.get_or_404(insumo_id)
+    if insumo_id not in lista:
+        lista.append(insumo_id)
+        session['lista_solicitudes']=lista
+        flash(f'Insumo: {insumo.descripcion} agregado a la lista de solicitudes.', 'success')
+    else:
+        flash('El insumo ya está en la lista de solicitudes.', 'info')
+    return redirect(url_for('solicitar_insumos'))    
+
+
+@app.route('/confirmar_solicitud_insumos', methods=['GET', 'POST'])
+@login_required
+def confirmar_solicitud_insumos():
+    lista=session.get('lista_solicitudes', [])
+    insumos=Insumo.query.filter(Insumo.id.in_(lista)).all() if lista else []
+    insumos = sorted(insumos, key=lambda x: lista.index(x.id))
+    cantidades=session.get('cantidades_solicitadas', {})
+    if request.method=='POST':
+
+        for insumo in insumos:
+            cantidad=request.form.get(f'cantidad_{insumo.id}', type=int)
+            if cantidad and cantidad>0:
+                cantidades[str(insumo.id)]=cantidad
+        session['cantidades_solicitadas']=cantidades
+
+        for insumo in insumos:
+            cantidad_solicitada = cantidades.get(str(insumo.id))
+            if cantidad_solicitada and cantidad_solicitada>0:
+                if cantidad_solicitada>insumo.stock_actual:
+                    flash(f'La cantidad solicitada para {insumo.descripcion} no puede ser mayor al stock actual.', 'danger')
+                    return redirect(url_for('confirmar_solicitud_insumos'))
+                nueva_solicitud = SolicitudInsumo(
+                    usuario_id=current_user.id_usuario,
+                    cantidad_solicitada=cantidad_solicitada,
+                    estado="pendiente",
+                    insumo_id=insumo.id     
+                )
+                db.session.add(nueva_solicitud)
+        db.session.commit()
+        session.pop('lista_solicitudes', None)
+        session.pop('cantidades_solicitadas', None)
+        flash('Solicitudes de insumos creadas con éxito.', 'success')
+        return redirect(url_for('index'))
+    return render_template('confirmar_solicitud_insumos.html', insumos=insumos, cantidades=cantidades)
+
+
+@app.route('/eliminar_insumo_lista/<int:insumo_id>', methods=['POST'])
+@login_required
+def eliminar_insumo_lista(insumo_id):
+    lista=session.get('lista_solicitudes', [])
+    cantidades=session.get('cantidades_solicitadas', {})
+
+    for id in lista:
+        cantidad=request.form.get(f'cantidad_{id}', type=int)
+        if cantidad and cantidad>0:
+            cantidades[str(id)]=cantidad
+
+    if insumo_id in lista:
+        lista.remove(insumo_id)
+        session['lista_solicitudes']=lista
+        cantidades.pop(str(insumo_id), None)
+        session['cantidades_solicitadas']=cantidades
+        flash('Insumo eliminado de la lista de solicitudes.', 'success')
+    else:
+        flash('El insumo no está en la lista de solicitudes.', 'info')
+    return redirect(url_for('confirmar_solicitud_insumos'))
+
+
 
 #Cargar las existencias iniciales del año. Habilitar.
 """

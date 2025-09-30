@@ -4,8 +4,8 @@
 <div class="table-container">
     <h1>Inventario de Insumos</h1>
     <form method="get" action="{{ url_for('consultar_inventario') }}">
-        <input type="text" name="filtro" placeholder="Buscar insumo..." value="{{ filtro }}">
-        <button type="submit">Filtrar</button>
+        <input type="text" name="filtro" class="filtro-input" placeholder="Buscar insumo..." value="{{ filtro }}">
+        <button type="submit" class="btn-filtrar filtro-btn">Filtrar</button>
     </form>
     <div class="table-scroll">
         <table>

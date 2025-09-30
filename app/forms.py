@@ -9,11 +9,6 @@ class CargarInsumoForm(FlaskForm):
     proveedor = StringField('Proveedor', validators=[DataRequired()])
     submit = SubmitField('Cargar Insumo')
 
-    
-class SolicitarInsumoForm(FlaskForm):
-    cantidad_solicitada = IntegerField('Cantidad Solicitada', validators=[DataRequired(), NumberRange(min=1)])
-    submit = SubmitField('Solicitar Insumo')    
-
 
 class EntregarSolicitudForm(FlaskForm):
     cantidad_entregada = IntegerField('Cantidad Entregada', validators=[DataRequired(), NumberRange(min=1)])
