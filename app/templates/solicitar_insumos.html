@@ -3,9 +3,10 @@
 <div class="menu-container">
     <h1>Solicitar Insumos</h1>
     <form method="get" action="{{ url_for('solicitar_insumos') }}">
-        <input type="text" name="filtro" class="filtro-input" placeholder="Buscar insumo..." value="{{ filtro }}">
+        <input type="text" name="filtro" class="filtro-input-menu" placeholder="Buscar insumo..." value="{{ filtro }}">
         <button type="submit" class="btn-filtrar filtro-btn">Filtrar</button>
     </form>
+    <div class="table-scroll">
     <table>
         <thead>
             <tr>
@@ -18,7 +19,7 @@
         <tbody>
         {% for insumo in insumos %}
             <tr>
-                <td>{{ insumo.codigo_producto }}</td>
+                <td>{{ insumo.codigo_insumo }}</td>
                 <td>{{ insumo.descripcion }}</td>
                 <td>{{ insumo.stock_actual }}</td>
                 <td>
@@ -30,9 +31,11 @@
         {% endfor %}
         </tbody>
     </table>
-    <br>
-    <a class="btn-link" href="{{ url_for('confirmar_solicitud_insumos') }}">Solicitar</a>
-    <br>
-    <a class="btn-link" href="{{ url_for('index') }}">Volver al menú</a>
+    </div>
+<!-- Contenedor para los botones de acción -->
+    <div class="action-buttons-footer">
+        <a href="{{ url_for('confirmar_solicitud_insumos') }}" class="btn-footer-solid">Solicitar</a>
+        <a href="{{ url_for('index') }}" class="btn-footer-outline">Volver al menú</a>
+    </div>
 </div>
 {% endblock %}

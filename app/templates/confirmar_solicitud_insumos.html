@@ -18,7 +18,7 @@
         {% for insumo in insumos %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ insumo.codigo_producto }}</td>
+                <td>{{ insumo.codigo_insumo }}</td>
                 <td>{{ insumo.descripcion }}</td>
                 <td>{{ insumo.stock_actual }}</td>
                 <td>
@@ -46,7 +46,7 @@
         <form method="post" id="confirmar-form" action="{{ url_for('confirmar_solicitud_insumos') }}">
             <button type="submit" class="btn-link">Confirmar</button>
         </form>
-        <a class="btn-link" href="{{ url_for('solicitar_insumos') }}">Volver atrás</a>
+        <a class="btn-link-dark" href="{{ url_for('solicitar_insumos') }}">Volver atrás</a>
     </div>
     {% else %}
     <div style="text-align:center; margin: 40px 0;">

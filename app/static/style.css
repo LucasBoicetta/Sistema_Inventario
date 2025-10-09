@@ -1,6 +1,6 @@
 
 body {
-        font-family: Arial, sans-serif;
+        font-family: system-ui;
         background-color: #f8f9fa;
         margin: 0;
         padding: 0;
@@ -28,19 +28,15 @@ body {
             max-width: 1100px;
             width: 100%;
             margin: 60px auto;
-            overflow-x: auto;
-            /* NUEVO: Altura máxima y scroll vertical */
-            max-height: 600px;
-            overflow-y: auto;
         }
         /* Para formularios */
         .form-container {
             background: #fff;
-            padding: 32px 32px 24px 32px;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
-            max-width: 400px;
-            margin: 40px auto;
+            padding: 50px 60px;
+            border-radius: 24px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+            max-width: 1100px;
+            margin: 80px auto;
         }
         .menu-container h1 {
             margin-bottom: 32px;
@@ -99,20 +95,11 @@ body {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 32px 0 16px 0;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    overflow: hidden;
 }
 th, td {
     padding: 14px 18px;
     text-align: left;
-}
-th {
-    background-color: #f2f2f2;
-    color: #333;
-    font-weight: 600;
+    border-bottom: 1px solid #ddd;
 }
 tr:nth-child(even) {
     background-color: #f9f9f9;
@@ -120,32 +107,8 @@ tr:nth-child(even) {
 tr:hover {
     background-color: #e9ecef;
 }
-button[type="button"], .btn, .btn-link {
-    background: none;
-    color: #1976d2;
-    opacity: 0.7;              /* Más transparente */
-    border: none;
-    font-size: 1.1rem;
-    text-decoration: underline;
-    cursor: pointer;
-    padding: 0;
-    margin-top: 18px;
-    display: inline-block;
-    transition: color 0.2s, opacity 0.2s;
-}
-button[type="button"]:hover, .btn:hover, .btn-link:hover {
-    color: #0d47a1;
-    opacity: 1;                /* Opaco al pasar el mouse */
-    background: none;
-}
-.form-container {
-    background: #fff;
-    padding: 32px 32px 24px 32px;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
-    max-width: 400px;
-    margin: 40px auto;
-}
+
+
 .form-container .btn-link {
     display: block;
     text-align: center;
@@ -198,9 +161,25 @@ button[type="button"]:hover, .btn:hover, .btn-link:hover {
 .table-scroll {
     max-height: 400px;   /* Ajusta la altura según prefieras */
     overflow-y: auto;
+    overflow-x: hidden;
     margin-top: 18px;
 }
-
+.table-scroll thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f2f2f2;
+    color: #333;
+    font-weight: 600;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+/* Fijar ancho y permitir salto de línea en Observaciones */
+.table-scroll td:last-child, .table-scroll th:last-child {
+    max-width: 110px;   /* Ajusta el ancho según prefieras */
+    width: 110px;
+    word-break: break-word;
+    white-space: normal;
+}
 .volver-container {
     width: 100%;
     display: flex;
@@ -283,7 +262,7 @@ button[type="button"]:hover, .btn:hover, .btn-link:hover {
     background: none;
     border: none;
     color: #1976d2;
-    font-size: 1rem;
+    font-size: 1.25rem;
     text-decoration: underline;
     cursor: pointer;
     margin: 0 10px;
@@ -294,8 +273,30 @@ button[type="button"]:hover, .btn:hover, .btn-link:hover {
 }
 
 .btn-link:hover, .btn-link:focus {
-    background: #e3eafc;
+    background: transparent;
     color: #0d47a1;
+    border: 2px solid #0d47a1;
+}
+/* NUEVA CLASE PARA EL BOTÓN OSCURO */
+.btn-link-dark {
+    background: none;
+    border: none;
+    color: #4b5563; /* Color gris oscuro */
+    font-size: 1.25rem;
+    text-decoration: underline;
+    cursor: pointer;
+    margin: 0 10px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: color 0.2s;
+    display: inline-block;
+}
+
+.btn-link-dark:hover {
+    color: #1f2937; /* Un negro más intenso al pasar el mouse */
+    border: 2px solid #9ca3af; /* IMPORTANTE: Dibuja el borde completo al pasar el mouse */
+    background: transparent; /* Asegura que no haya fondo */
+
 }
 
 .filtro-form {
@@ -306,18 +307,49 @@ button[type="button"]:hover, .btn:hover, .btn-link:hover {
     align-items: center;
 }
 
-.filtro-input {
+.filtro-input-menu {
     padding: 8px 14px;
     border: 1.5px solid #bdbdbd;
     border-radius: 6px;
     font-size: 1.08rem;
     transition: border-color 0.2s;
     outline: none;
-    width: 220px;
+    width: 355px;
     background: #f7fafc;
 }
 
-.filtro-input:focus {
+.filtro-input-menu:focus {
+    border-color: #1976d2;
+    background: #fff;
+}
+
+.filtro-input-table {
+    padding: 8px 14px;
+    border: 1.5px solid #bdbdbd;
+    border-radius: 6px;
+    font-size: 1.08rem;
+    transition: border-color 0.2s;
+    outline: none;
+    width: 975px;
+    background: #f7fafc;
+}
+
+.filtro-input-table:focus {
+    border-color: #1976d2;
+    background: #fff;
+}
+.filtro-input-page {
+    padding: 8px 14px;
+    border: 1.5px solid #bdbdbd;
+    border-radius: 6px;
+    font-size: 1.08rem;
+    transition: border-color 0.2s;
+    outline: none;
+    width: 1041px;
+    background: #f7fafc;
+}
+
+.filtro-input-page:focus {
     border-color: #1976d2;
     background: #fff;
 }
@@ -344,3 +376,128 @@ button[type="button"]:hover, .btn:hover, .btn-link:hover {
     text-decoration: none;
     display: inline-block;
 }
+
+.p-20 { padding: 20px; }
+
+/* === ESTILOS AISLADOS PARA BOTONES DE PIE DE PÁGINA === */
+
+/* Contenedor para los dos botones inferiores */
+.action-buttons-footer {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espacio entre los botones */
+}
+
+/* Estilo base para ambos botones */
+.action-buttons-footer a {
+    display: block;
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none; /* Quita el subrayado */
+    border-radius: 10px; /* Bordes redondeados */
+    transition: all 0.2s ease-in-out;
+    box-sizing: border-box; /* Asegura que el padding no afecte el ancho */
+}
+
+/* Botón azul sólido (Solicitar) */
+.btn-footer-solid {
+    background-color: #3b82f6; /* Azul de la imagen */
+    color: white !important;
+    border: 2px solid #3b82f6;
+}
+
+.btn-footer-solid:hover {
+    background-color: #2563eb !important; /* Azul más oscuro */
+    border-color: #2563eb;
+    color: white !important;
+}
+
+/* Botón blanco con borde (Volver al menú) */
+.btn-footer-outline {
+    background-color: white;
+    color: #4b5563 !important; /* Color de texto gris oscuro */
+    border: 2px solid #d1d5db; /* Borde gris claro */
+}
+
+.btn-footer-outline:hover {
+    border-color: #9ca3af; /* Borde más oscuro */
+    background-color: #f9fafb;
+}
+/* === ESTILOS PARA FORMULARIO EN TABLA DE SOLICITUDES === */
+
+/* Contenedor que apila los elementos del formulario */
+.action-form-stack form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Este es el espacio entre los inputs y el botón */
+    min-width: 220px; /* Ancho mínimo para que no se vea muy angosto */
+}
+
+/* Estilo para los inputs dentro de este formulario */
+.form-control-stack {
+    width: 100%; /* Ocupa todo el ancho del contenedor */
+    padding: 10px 14px;
+    border: 1.5px solid #bdbdbd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    outline: none;
+    background: #f7fafc;
+    box-sizing: border-box; /* Evita que el padding afecte el ancho total */
+}
+
+.form-control-stack:focus {
+    border-color: #1976d2;
+    background: #fff;
+}
+
+/* Nuevo botón "Entregar" más ancho */
+.btn-entregar-full {
+    background-color: #43a047; /* Mismo color que btn-agregar */
+    color: #fff !important;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px; /* Un poco más de padding vertical */
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    width: 100%; /* Ocupa todo el ancho */
+}
+
+.btn-entregar-full:hover {
+    background-color: #388e3c;
+    box-shadow: 0 4px 12px rgba(67,160,71,0.15);
+}
+
+/* === ESTILO CORREGIDO PARA BOTÓN DE EXPORTACIÓN FIJO === */
+a.btn-export-fixed { /* Aumentamos especificidad con 'a.' */
+    position: fixed;
+    bottom: 20px;    /* Lo movemos más abajo */
+    left: 25px;
+    z-index: 999;
+    
+    background-color: #43a047; /* Tono de verde (como btn-agregar) */
+    color: #fff !important;
+    text-decoration: none !important; /* Aseguramos que no haya subrayado */
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+a.btn-export-fixed:hover { /* Aumentamos especificidad con 'a.' */
+    background-color: #388e3c;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    color: #fff !important; /* Mantenemos el color del texto */
+}
+
