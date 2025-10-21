@@ -1,0 +1,50 @@
+# Archivos de entorno
+.env
+.flaskenv
+
+# Entorno virtual
+venv/
+env/
+ENV/
+.venv
+
+# Base de datos SQLite
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Migraciones de Flask (opcional, solo si no quieres compartirlas)
+# migrations/
+
+# Archivos de configuración del IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Archivos de distribución
+dist/
+build/
+*.egg-info/
