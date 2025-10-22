@@ -159,11 +159,14 @@ tr:hover {
 }
 
 .table-scroll {
-    max-height: 400px;   /* Ajusta la altura según prefieras */
+    max-height: 500px;   /* Aumentado para ver más filas */
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: auto;    /* Cambiado de hidden a auto */
     margin-top: 18px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
+
 .table-scroll thead th {
     position: sticky;
     top: 0;
@@ -173,10 +176,12 @@ tr:hover {
     z-index: 2;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
+
 /* Fijar ancho y permitir salto de línea en Observaciones */
-.table-scroll td:last-child, .table-scroll th:last-child {
-    max-width: 110px;   /* Ajusta el ancho según prefieras */
-    width: 110px;
+.table-scroll td:last-child, 
+.table-scroll th:last-child {
+    max-width: 220px;   /* Aumentado para observaciones más largas */
+    width: 220px;
     word-break: break-word;
     white-space: normal;
 }
@@ -345,7 +350,7 @@ tr:hover {
     font-size: 1.08rem;
     transition: border-color 0.2s;
     outline: none;
-    width: 1041px;
+    width: 1075px;
     background: #f7fafc;
 }
 
@@ -359,6 +364,15 @@ tr:hover {
     padding: 8px 18px;
     font-size: 1.08rem;
     font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+.filtro-btn:hover{
+    background-color: #1976d2;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    color: #fff !important;
 }
 
 .btn-filtrar {
@@ -375,6 +389,7 @@ tr:hover {
     margin: 0;
     text-decoration: none;
     display: inline-block;
+    
 }
 
 .p-20 { padding: 20px; }
@@ -408,24 +423,32 @@ tr:hover {
     background-color: #3b82f6; /* Azul de la imagen */
     color: white !important;
     border: 2px solid #3b82f6;
+    transition: all 0.2s ease;
 }
 
 .btn-footer-solid:hover {
-    background-color: #2563eb !important; /* Azul más oscuro */
-    border-color: #2563eb;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
     color: white !important;
 }
 
+
 /* Botón blanco con borde (Volver al menú) */
 .btn-footer-outline {
-    background-color: white;
-    color: #4b5563 !important; /* Color de texto gris oscuro */
-    border: 2px solid #d1d5db; /* Borde gris claro */
+    background-color: #4b5563;
+    color: white !important; 
+    border: 2px solid #d1d5db;
+    transition: all 0.2s ease; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .btn-footer-outline:hover {
     border-color: #9ca3af; /* Borde más oscuro */
-    background-color: #f9fafb;
+    background-color: #374151;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    color: white !important;
+
 }
 /* === ESTILOS PARA FORMULARIO EN TABLA DE SOLICITUDES === */
 
@@ -501,3 +524,14 @@ a.btn-export-fixed:hover { /* Aumentamos especificidad con 'a.' */
     color: #fff !important; /* Mantenemos el color del texto */
 }
 
+/* Para páginas con tablas grandes */
+.page-container {
+    background-color: #fff;
+    padding: 40px 48px 32px 48px;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.10);
+    max-width: 1200px;
+    width: 100%;
+    margin: 60px auto;
+    /* NO pongas max-height ni overflow aquí */
+}

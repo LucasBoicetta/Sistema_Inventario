@@ -4,7 +4,7 @@
             "previewLimit": 50,
             "driver": "SQLite",
             "name": "inventario",
-            "database": "${workspaceFolder:SistemaInventario-SGQ}/app/app.db"
+            "database": "${workspaceFolder:SistemaInventario-SGQ}/instance/app.db"
         }
     ],
     "sqltools.useNodeRuntime": true

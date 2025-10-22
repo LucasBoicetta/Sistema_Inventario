@@ -105,11 +105,17 @@ def solicitar_insumos():
 @app.route('/ver_solicitudes', methods=['GET'])
 @login_required
 def ver_solicitudes():
+    filtro = request.args.get('filtro', '')
+    query = sa.select(SolicitudInsumo).join(User).where(SolicitudInsumo.estado == False)
+    if filtro:
+        try:
+            numero_solicitud = int(filtro)
+            query = query.where(SolicitudInsumo.id_solicitud == numero_solicitud)
+        except ValueError:
+            flash('Por favor ingresa un número de solicitud válido.', 'warning')
+
     solicitudes_pendientes = db.session.scalars(
-        sa.select(SolicitudInsumo)
-        .join(User)
-        .where(SolicitudInsumo.estado == False)
-        .order_by(SolicitudInsumo.fecha_solicitud.desc())
+        query.order_by(SolicitudInsumo.fecha_solicitud.desc())
     ).all()
     if not solicitudes_pendientes:
         flash('No hay solicitudes pendientes.', 'info')
@@ -122,7 +128,7 @@ def ver_solicitudes():
     ).all()
     print("Solicitudes completadas para PDF:", [s.id_solicitud for s in solicitudes_completadas_usuario])
 
-    return render_template('ver_solicitudes.html', solicitudes_pendientes=solicitudes_pendientes, solicitudes_completadas_usuario=solicitudes_completadas_usuario)
+    return render_template('ver_solicitudes.html', solicitudes_pendientes=solicitudes_pendientes, solicitudes_completadas_usuario=solicitudes_completadas_usuario, filtro=filtro)
 
 # LOGICA COMPLETA DETRÁS DE LA ACCION DE ENTREGAR UNA SOLICITUD
 # SE ACTUALIZA EL STOCK, SE CREA EL REGISTRO DE SALIDA, SE ACTUALIZA EL ESTADO DE LA SOLICITUD
