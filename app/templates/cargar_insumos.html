@@ -1,32 +1,59 @@
 {% extends "base.html" %}
-{% block title %}Cargar Insumos{% endblock %}
+{% block title %}Cargar Insumo{% endblock %}
 {% block content %}
-<div class="form-container">
-    <h2>Cargar Insumo</h2>
-    <form method="post">
-        {{ form.hidden_tag() }}
-        <div class="form-group">
-            {{ form.codigo_producto.label }}<br>
-            {{ form.codigo_producto(class="form-control") }}
+
+<div class="page-wrapper">
+    <div class="content-card content-card-small">
+        <!-- Título con tooltip -->
+        <div style="position: relative; text-align: center; margin-bottom: 2rem;">
+            <h1 class="page-title" style="display: inline-block;">Cargar Insumo</h1>
+            <div class="tooltip-container">
+                <span class="info-icon">ℹ️</span>
+                <div class="tooltip-content">
+                    <strong>💡 Instrucciones:</strong>
+                    <ul style="text-align: left; margin: 0.5rem 0; padding-left: 1.5rem;">
+                        <li>Si el código ya existe, se actualizará automáticamente el stock</li>
+                        <li>Para insumos <strong>existentes</strong>: NO es necesario rellenar descripción pero SÍ el proveedor</li>
+                        <li>Para insumos <strong>nuevos</strong>: SÍ debes ingresar la descripción y proveedor</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            {{ form.descripcion.label }}<br>
-            {{ form.descripcion(class="form-control") }}
+        
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                <label class="form-label">{{ form.codigo_producto.label }}</label>
+                {{ form.codigo_producto(class="form-control", placeholder="Ej: INS001") }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">{{ form.descripcion.label }}</label>
+                {{ form.descripcion(class="form-control", placeholder="Descripción del insumo") }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">{{ form.cantidad_entradas.label }}</label>
+                {{ form.cantidad_entradas(class="form-control", placeholder="Cantidad de entradas") }}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">{{ form.proveedor.label }}</label>
+                {{ form.proveedor(class="form-control", placeholder="Nombre del proveedor") }}
+            </div>
+            
+            <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 1rem;">
+                Cargar
+            </button>
+        </form>
+        
+        <div class="btn-back-container">
+            <a href="{{ url_for('index') }}" class="btn-back">
+                ← Volver al menú
+            </a>
         </div>
-        <div class="form-group">
-            {{ form.cantidad_entradas.label }}<br>
-            {{ form.cantidad_entradas(class="form-control") }}
-        </div>
-        <div class="form-group">
-            {{ form.proveedor.label }}<br>
-            {{ form.proveedor(class="form-control") }}
-        </div>
-        <div class="btn-agregar">
-            {{ form.submit(class="btn-agregar") }}
-        </div>
-    </form>
+    </div>
 </div>
-<div class="action-buttons-footer" style="max-width: 400px; margin: 20px auto 0 auto;">
-    <a class="btn-footer-outline" href="{{ url_for('index') }}">Volver al menú</a>
-</div>
+
 {% endblock %}

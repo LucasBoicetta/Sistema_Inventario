@@ -2,30 +2,33 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema de Inventario{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         {% block content %}{% endblock %}
     </div>
-</body>
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <ul class="flashes">
-    {% for category, message in messages %}
-      <li class="flash {{ category }}">{{ message }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
-</html>
 
-<script>
-  setTimeout(function() {
-    document.querySelectorAll('.flash:not(.success)').forEach(function(el) {
-      el.style.opacity = '0';
-      setTimeout(function(){ el.style.display = 'none'; }, 600);
-    });
-  }, 3500);
-</script>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="flash {{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <script>
+      setTimeout(function() {
+        document.querySelectorAll('.flash').forEach(function(el) {
+          el.style.opacity = '0';
+          setTimeout(function(){ el.style.display = 'none'; }, 600);
+        });
+      }, 3500);
+    </script>
+</body>
+</html>

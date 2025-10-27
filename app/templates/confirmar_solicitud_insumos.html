@@ -1,79 +1,146 @@
 {% extends "base.html" %}
+{% block title %}Confirmar Solicitud de Insumos{% endblock %}
 {% block content %}
-<div class="page-container">
-    {% if insumos %}
-    <h2>Confirmar Solicitud de Insumos</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>N°</th>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>Stock</th>
-                <th>Cantidad a solicitar</th>
-                <th>Eliminar</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for insumo in insumos %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ insumo.codigo_insumo }}</td>
-                <td>{{ insumo.descripcion }}</td>
-                <td>{{ insumo.stock_actual }}</td>
-                <td>
-                    <!-- Campo de cantidad, pero fuera de cualquier form -->
-                    <input form="confirmar-form" type="number" name="cantidad_{{ insumo.id }}" id="cantidad_{{ insumo.id }}" min="1" max="{{ insumo.stock_actual }}" required
-                        value="{{ cantidades[insumo.id|string]|default('') }}">
-                </td>
-                <td>
-                       <form method="post" action="{{ url_for('eliminar_insumo_lista', insumo_id=insumo.id) }}" style="display:inline;" onsubmit="return copiarCantidades(this);">
-                            <button type="submit" class="btn-eliminar">Eliminar</button>
-                            {% for otro in insumos %}
-                                {% if otro.id != insumo.id %}
-                                    <input type="hidden" name="cantidad_{{ otro.id }}" id="hidden_cantidad_{{ otro.id }}_{{ insumo.id }}">
-                                {% endif %}
-                            {% endfor %}
-                        </form>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    <br>
-    <div style="margin-top: 10px; display: flex; justify-content: space-between;">
-        <!-- Formulario solo para confirmar -->
-        <form method="post" id="confirmar-form" action="{{ url_for('confirmar_solicitud_insumos') }}">
-            <button type="submit" class="btn-link">Confirmar</button>
+
+<div class="page-wrapper">
+    <div class="content-card content-card-large">
+        <h1 class="page-title">Confirmar Solicitud de Insumos</h1>
+        
+        {% if insumos %}
+        <!-- Tabla con scroll -->
+        <div class="table-wrapper">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                            <th>Stock</th>
+                            <th>Cantidad a solicitar</th>
+                            <th>Eliminar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for insumo in insumos %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ insumo.codigo_insumo }}</td>
+                            <td>{{ insumo.descripcion }}</td>
+                            <td>{{ insumo.stock_actual }}</td>
+                            <td>
+                                <!-- ✅ form="confirmar-form" vincula este input al formulario de confirmar -->
+                                <input type="number" 
+                                       form="confirmar-form"
+                                       name="cantidad_{{ insumo.id }}" 
+                                       id="cantidad_{{ insumo.id }}"
+                                       class="quantity-input" 
+                                       value="{{ cantidades[insumo.id|string]|default(1) }}" 
+                                       min="1" 
+                                       max="{{ insumo.stock_actual }}">
+                            </td>
+                            <td>
+                                <form method="POST" 
+                                      action="{{ url_for('eliminar_insumo_lista', insumo_id=insumo.id) }}" 
+                                      style="display: inline;"
+                                      onsubmit="return copiarCantidades(this);">
+                                    <button type="submit" class="btn btn-danger btn-small">
+                                        Eliminar
+                                    </button>
+                                    <!-- Inputs ocultos para preservar cantidades -->
+                                    {% for otro in insumos %}
+                                        {% if otro.id != insumo.id %}
+                                            <input type="hidden" 
+                                                   name="cantidad_{{ otro.id }}" 
+                                                   id="hidden_cantidad_{{ otro.id }}_{{ insumo.id }}">
+                                        {% endif %}
+                                    {% endfor %}
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- ✅ Formulario de confirmar al final, FUERA de la tabla -->
+        <form method="POST" id="confirmar-form" action="{{ url_for('confirmar_solicitud_insumos') }}">
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
+                <button type="submit" class="btn btn-primary">Confirmar</button>
+                <a href="{{ url_for('solicitar_insumos') }}" class="btn btn-secondary">Volver atrás</a>
+            </div>
         </form>
-        <a class="btn-link-dark" href="{{ url_for('solicitar_insumos') }}">Volver atrás</a>
+        
+        {% else %}
+        <!-- Mensaje cuando no hay insumos -->
+        <div style="text-align: center; margin: 40px 0;">
+            <div style="font-size: 4rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                ⚠️
+            </div>
+            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem;">
+                No hay insumos en la lista de solicitud.<br>
+                Agrega insumos para poder realizar una solicitud.
+            </p>
+            <a href="{{ url_for('solicitar_insumos') }}" class="btn btn-primary">
+                Agregar insumos
+            </a>
+        </div>
+        {% endif %}
+        
+        <div class="btn-back-container">
+            <a href="{{ url_for('index') }}" class="btn-back">
+                ← Volver al menú
+            </a>
+        </div>
     </div>
-    {% else %}
-    <div style="text-align:center; margin: 40px 0;">
-        <span style="font-size:2.5rem; color:#bdbdbd;">&#9888;</span>
-        <p style="font-size:1.2rem; color:#757575; margin-top:10px;">
-            No hay insumos en la lista de solicitud.<br>
-            Agrega insumos para poder realizar una solicitud.
-        </p>
-        <a class="btn-link" href="{{ url_for('solicitar_insumos') }}">Agregar insumos</a>
-    </div>
-    {% endif %}
 </div>
+
 <script>
 function copiarCantidades(form) {
     try {
+        // Copiar todas las cantidades visibles a los inputs ocultos del form de eliminar
         document.querySelectorAll('input[type="number"][name^="cantidad_"]').forEach(function(input) {
             var hidden = form.querySelector('input[name="' + input.name + '"]');
             if (hidden) {
                 hidden.value = input.value;
-                console.log('Copiando', input.name, 'valor:', input.value, 'al input oculto');
+                console.log('Copiando', input.name, 'valor:', input.value);
             }
         });
-        return true; // Permite el envío del form
+        return true; // ✅ Siempre permite eliminar
     } catch (e) {
         console.error('Error en copiarCantidades:', e);
         return false;
     }
 }
+
+// ✅ Validar SOLO cuando se envía el formulario de confirmar
+document.getElementById('confirmar-form').addEventListener('submit', function(e) {
+    let valid = true;
+    let emptyInputs = [];
+    
+    document.querySelectorAll('.quantity-input').forEach(function(input) {
+        if (!input.value || input.value < 1 || input.value > parseInt(input.max)) {
+            input.style.borderColor = 'var(--danger-color)';
+            input.style.boxShadow = '0 0 5px var(--danger-color)';
+            valid = false;
+            emptyInputs.push(input);
+        } else {
+            input.style.borderColor = '';
+            input.style.boxShadow = '';
+        }
+    });
+    
+    if (!valid) {
+        e.preventDefault();
+        alert('Por favor, ingresa cantidades válidas para todos los insumos.');
+        // Hacer focus en el primer input inválido
+        if (emptyInputs.length > 0) {
+            emptyInputs[0].focus();
+        }
+        return false;
+    }
+});
 </script>
+
 {% endblock %}

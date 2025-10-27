@@ -1,30 +1,120 @@
 {% extends "base.html" %}
 {% block title %}Menú de Opciones{% endblock %}
 {% block content %}
-<div class="user-menu">
-    <span>👤 {{ current_user.nombre }}</span>
-    <a href="{{ url_for('cambiar_contraseña') }}">Cambiar contraseña</a>
-    <a href="{{ url_for('logout') }}">Cerrar sesión</a>
+
+<!-- Header con información de usuario -->
+<header class="modern-header">
+    <div class="header-logo">
+            <img src="{{ url_for('static', filename='logoSindicaturaNew-removebg-preview.png') }}" alt="SGQ Logo" class="logo-image">
+    </div>
+    <div class="user-actions">
+        <div class="user-info">
+            <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ current_user.nombre }}</span>
+        </div>
+        <a href="{{ url_for('cambiar_contraseña') }}" class="header-link">
+            <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+            </svg>
+            <span class="link-text">Cambiar contraseña</span>
+        </a>
+        <a href="{{ url_for('logout') }}" class="header-link">
+            <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span class="link-text">Cerrar sesión</span>
+        </a>
+    </div>
+</header>
+
+<!-- Contenedor principal -->
+<div class="modern-container">
+    <!-- Sección izquierda: Título y logo -->
+    <div class="title-section">
+        <div class="logo-wrapper">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="SGQ Logo" class="modern-logo">
+        </div>
+        <h1 class="main-title">SINDICATURA GENERAL<br>DE QUIEBRAS</h1>
+        <div class="divider"></div>
+        <p class="subtitle">Menú de Opciones</p>
+    </div>
+
+    <!-- Sección derecha: Menú de opciones -->
+    <nav class="menu-section">
+        <ul class="modern-menu">
+            {% if current_user.is_authenticated and current_user.rol.nombre_rol == 'admin' %}
+                <li class="menu-item">
+                    <a href="{{ url_for('consultar_inventario') }}">
+                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <span>Consultar Inventario</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('cargar_insumos') }}">
+                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Cargar Insumos</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('entrada_insumos') }}">
+                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                        </svg>
+                        <span>Entrada Insumos</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('solicitar_insumos') }}">
+                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Solicitar Insumos</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('ver_solicitudes') }}">
+                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <span>Ver Solicitudes</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('salida_insumos') }}">
+                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span>Salida Insumos</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="menu-item">
+                    <a href="{{ url_for('solicitar_insumos') }}">
+                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Solicitar Insumos</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="{{ url_for('ver_solicitudes') }}">
+                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <span>Ver Solicitudes</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
 
-<div class="menu-container">
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
-        
-    </div>
-    <h1>Menú de Opciones</h1>
-    <ul>
-        {% if current_user.is_authenticated and current_user.rol.nombre_rol== 'admin' %}
-            <li><a href="{{ url_for('consultar_inventario') }}">Consultar Inventario</a></li>
-            <li><a href="{{ url_for('cargar_insumos') }}">Cargar Insumos</a></li>
-            <li><a href="{{ url_for('entrada_insumos') }}">Entrada Insumos</a></li>
-            <li><a href="{{ url_for('solicitar_insumos') }}">Solicitar Insumos</a></li>
-            <li><a href="{{ url_for('ver_solicitudes') }}">Ver Solicitudes</a></li>
-            <li><a href="{{ url_for('salida_insumos') }}">Salida Insumos</a></li>
-         {% else %}
-            <li><a href="{{ url_for('solicitar_insumos') }}">Solicitar Insumos</a></li>
-            <li><a href="{{ url_for('ver_solicitudes') }}">Ver Solicitudes</a></li>
-        {% endif %}    
-    </ul>
-</div>
 {% endblock %}

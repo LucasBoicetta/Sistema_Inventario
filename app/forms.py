@@ -1,10 +1,10 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, FloatField, SubmitField, StringField, PasswordField
-from wtforms.validators import DataRequired, NumberRange
+from wtforms.validators import DataRequired, NumberRange, Optional
 
 class CargarInsumoForm(FlaskForm):
     codigo_producto = StringField('Código de Producto', validators=[DataRequired()])
-    descripcion = StringField('Descripción', validators=[DataRequired()])
+    descripcion = StringField('Descripción', validators=[Optional()])
     cantidad_entradas = IntegerField('Cantidad de Entradas', validators=[DataRequired(), NumberRange(min=1)])
     proveedor = StringField('Proveedor', validators=[DataRequired()])
     submit = SubmitField('Cargar')

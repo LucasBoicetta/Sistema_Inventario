@@ -1,95 +1,136 @@
 {% extends "base.html" %}
 {% block title %}Ver Solicitudes{% endblock %}
 {% block content %}
-<div class="page-container">
 
-    <!-- SECCIÓN PARA ADMINISTRADORES: SOLICITUDES PENDIENTES DE ENTREGA -->
-    {% if current_user.rol.id_rol == 1 and solicitudes_pendientes %}
-        <h1>Solicitudes Pendientes de Entrega</h1>
-        <form method="get" action="{{ url_for('ver_solicitudes') }}">
-            <input type="text" name="filtro" class="filtro-input-table" style="width: 1075px;" placeholder="Buscar solicitud por N°" value="{{ filtro }}">
-            <button type="submit" class="btn-filtrar filtro-btn">Filtrar</button>
-        </form>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nº Solicitud</th>
-                        <th>Fecha</th>
-                        <th>Solicitante</th>
-                        <th>Dependencia</th>
-                        <th>Insumo</th>
-                        <th>Cantidad</th>
-                        <th style="width: 240px;">Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for solicitud in solicitudes_pendientes %}
-                        {% for detalle in solicitud.detalles %}
-                            {% if not detalle.salidas %} <!-- Mostrar solo los ítems que aún no tienen salida -->
+<div class="page-wrapper">
+    <div class="content-card content-card-large">
+        
+        <!-- SECCIÓN PARA ADMINISTRADORES: SOLICITUDES PENDIENTES DE ENTREGA -->
+        {% if current_user.rol.id_rol == 1 %}
+            <h1 class="page-title">Solicitudes Pendientes de Entrega</h1>
+            
+            <!-- Barra de búsqueda -->
+            <form method="GET" class="search-bar">
+                <input type="text" 
+                       name="filtro" 
+                       class="search-input" 
+                       placeholder="Buscar solicitud por N°..." 
+                       value="{{ request.args.get('filtro', '') }}">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </form>
+            
+            {% if solicitudes_pendientes %}
+            <!-- Tabla con scroll -->
+            <div class="table-wrapper">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Solicitud</th>
+                                <th>Fecha</th>
+                                <th>Solicitante</th>
+                                <th>Dependencia</th>
+                                <th>Insumo</th>
+                                <th>Cantidad</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for solicitud in solicitudes_pendientes %}
+                                {% for detalle in solicitud.detalles %}
+                                    {% if not detalle.salidas %}
+                                    <tr>
+                                        <td>{{ solicitud.id_solicitud }}</td>
+                                        <td>{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
+                                        <td>{{ solicitud.usuario.nombre }}</td>
+                                        <td>{{ solicitud.usuario.dependencia.nombre_dependencia }}</td>
+                                        <td>{{ detalle.insumo.descripcion }}</td>
+                                        <td>{{ detalle.cantidad_solicitada }}</td>
+                                        <td>
+                                            <form method="POST" 
+                                                  action="{{ url_for('entregar_solicitud', detalle_id=detalle.id_solicitudes_insumos) }}" 
+                                                  style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                                <input type="number" 
+                                                       name="cantidad_entregada" 
+                                                       class="quantity-input" 
+                                                       placeholder="Cantidad a Entregar" 
+                                                       value="{{ detalle.cantidad_solicitada }}" 
+                                                       min="1" 
+                                                       max="{{ detalle.cantidad_solicitada }}" 
+                                                       required>
+                                                <input type="text" 
+                                                       name="observaciones" 
+                                                       class="observation-input" 
+                                                       placeholder="Observaciones (opcional)">
+                                                <button type="submit" class="btn btn-success btn-small">
+                                                    Entregar
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <p style="text-align: center; margin: 2rem 0; font-size: 1.2rem; color: var(--text-secondary);">
+                No hay solicitudes pendientes para entregar.
+            </p>
+            {% endif %}
+            
+        {% else %}
+            <!-- SECCIÓN PARA FUNCIONARIOS: MIS SOLICITUDES COMPLETADAS -->
+            <h1 class="page-title">Mis Solicitudes</h1>
+            
+            {% if solicitudes_completadas_usuario %}
+            <!-- Tabla con scroll -->
+            <div class="table-wrapper">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>N° Solicitud</th>
+                                <th>Fecha Solicitud</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for solicitud in solicitudes_completadas_usuario %}
                             <tr>
                                 <td>{{ solicitud.id_solicitud }}</td>
                                 <td>{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
-                                <td>{{ solicitud.usuario.nombre }}</td>
-                                <td>{{ solicitud.usuario.dependencia.nombre_dependencia }}</td>
-                                <td>{{ detalle.insumo.descripcion }}</td>
-                                <td>{{ detalle.cantidad_solicitada }}</td>
                                 <td>
-                                    <div class="action-form-stack">
-                                        <!-- El formulario ahora apunta al detalle específico -->
-                                        <form method="post" action="{{ url_for('entregar_solicitud', detalle_id=detalle.id_solicitudes_insumos) }}">
-                                            <input type="number" name="cantidad_entregada" class="form-control-stack" placeholder="Cantidad a Entregar" value="{{ detalle.cantidad_solicitada }}" min="1" max="{{ detalle.cantidad_solicitada }}" required>
-                                            <input type="text" name="observaciones" class="form-control-stack" placeholder="Observaciones (opcional)">
-                                            <button type="submit" class="btn-entregar-full">Entregar</button>
-                                        </form>
-                                    </div>
+                                    <span class="badge badge-success">Completada</span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('generar_pdf_solicitud', solicitud_id=solicitud.id_solicitud) }}" 
+                                       class="btn btn-primary btn-small">
+                                        📄 Generar PDF
+                                    </a>
                                 </td>
                             </tr>
-                            {% endif %}
-                        {% endfor %}
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <p style="text-align: center; margin: 2rem 0; font-size: 1.2rem; color: var(--text-secondary);">
+                No tienes solicitudes completadas.
+            </p>
+            {% endif %}
+        {% endif %}
+        
+        <div class="btn-back-container">
+            <a href="{{ url_for('index') }}" class="btn-back">
+                ← Volver al menú
+            </a>
         </div>
-    {% endif %}
-    {% if current_user.rol.id_rol == 1 and not solicitudes_pendientes %}
-        <p class="text-center mt-4" style="font-size:1.2em;color:#888;">
-            No hay solicitudes pendientes para entregar.
-        </p> 
-    {% endif %} 
-    <!-- SECCIÓN PARA EL USUARIO ACTUAL: SOLICITUDES COMPLETADAS PARA GENERAR PDF -->
-    {% if solicitudes_completadas_usuario %}
-        <h1 style="margin-top: 40px;">Mis Solicitudes Listas para PDF ({{ solicitudes_completadas_usuario|length }})</h1>
-        <div class="table-scroll">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nº Solicitud</th>
-                        <th>Fecha Solicitud</th>
-                        <th>Estado</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for solicitud in solicitudes_completadas_usuario %}
-                    <tr>
-                        <td>{{ solicitud.id_solicitud }}</td>
-                        <td>{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
-                        <td><span class="entregado-badge">Completada</span></td>
-                        <td>
-                            <a href="{{ url_for('generar_pdf_solicitud', solicitud_id=solicitud.id_solicitud) }}" class="btn-agregar" style="text-decoration: none;">Generar PDF</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% elif not current_user.rol.id_rol==1 %}
-        <p class="text-center mt-4">No tienes solicitudes completadas pendientes de generar PDF.</p>
-    {% endif %}
-
-    <div class="action-buttons-footer" style="max-width: 400px; margin: 40px auto 0 auto;">
-        <a class="btn-footer-outline" href="{{ url_for('index') }}">Volver al menú</a>
     </div>
 </div>
+
 {% endblock %}

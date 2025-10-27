@@ -45,6 +45,10 @@ def consultar_inventario():
 def cargar_insumos():
     form = CargarInsumoForm()
     if form.validate_on_submit():
+        if not form.proveedor.data or not form.proveedor.data.strip():
+            flash('Debes ingresar el proveedor para registrar la entrada.', 'danger')
+            return render_template('cargar_insumos.html', form=form)
+        
         insumo=db.session.scalar(sa.select(Insumo)
                                  .where(Insumo.codigo_insumo==form.codigo_producto.data))
         if insumo:
@@ -55,6 +59,10 @@ def cargar_insumos():
             db.session.commit()
             flash(f'Se han actualizado las existencias del insumo {insumo.codigo_insumo}.', 'success')
         else:
+            if not form.descripcion.data or not form.descripcion.data.strip():
+                flash('Para un insumo nuevo, debes ingresar una descripción y proveedor.', 'danger')
+                return render_template('cargar_insumos.html', form=form)
+            
             nuevo_insumo = Insumo(
                 codigo_insumo=form.codigo_producto.data,
                 descripcion=form.descripcion.data,
@@ -65,19 +73,21 @@ def cargar_insumos():
             db.session.commit()
             flash(f'Se ha agregado un nuevo insumo: {nuevo_insumo.codigo_insumo}.', 'success')
         
-        proveedor=db.session.scalar(sa.select(Proveedor).where(Proveedor.nombre==form.proveedor.data))
+        proveedor = db.session.scalar(sa.select(Proveedor)
+                                         .where(Proveedor.nombre == form.proveedor.data))
         if not proveedor:
-            proveedor=Proveedor(nombre=form.proveedor.data)
+            proveedor = Proveedor(nombre=form.proveedor.data)
             db.session.add(proveedor)
             db.session.commit()
 
         nueva_entrada = EntradaInsumo(
             id_proveedor=proveedor.id_proveedor,
-            cantidad=form.cantidad_entradas.data,
+            cantidad=form.cantidad_entradas.data,                
             id_insumo=insumo.id if insumo else nuevo_insumo.id,
         )
         db.session.add(nueva_entrada)
         db.session.commit()
+        flash(f'Entrada registrada: {form.cantidad_entradas.data} unidades de {proveedor.nombre}', 'info')
         return redirect(url_for('index'))
     return render_template('cargar_insumos.html', form=form)
 
@@ -297,6 +307,10 @@ def confirmar_solicitud_insumos():
     cantidades=session.get('cantidades_solicitadas', {})
     if request.method=='POST':
 
+        if not insumos:
+            flash('No hay insumos en la lista para confirmar la solicitud.', 'warning')
+            return redirect(url_for('solicitar_insumos'))
+
         for insumo in insumos:
             cantidad=request.form.get(f'cantidad_{insumo.id}', type=int)
             if cantidad and cantidad>0:
@@ -338,6 +352,7 @@ def eliminar_insumo_lista(insumo_id):
     lista=session.get('lista_solicitudes', [])
     cantidades=session.get('cantidades_solicitadas', {})
 
+    # Guardar cantidades actuales de todos los insumos
     for id in lista:
         cantidad=request.form.get(f'cantidad_{id}', type=int)
         if cantidad and cantidad>0:
@@ -345,13 +360,22 @@ def eliminar_insumo_lista(insumo_id):
 
     if insumo_id in lista:
         lista.remove(insumo_id)
-        session['lista_solicitudes']=lista
         cantidades.pop(str(insumo_id), None)
-        session['cantidades_solicitadas']=cantidades
-        flash('Insumo eliminado de la lista de solicitudes.', 'success')
+        flash('Insumo eliminado de la lista de solicitudes', 'success')
     else:
-        flash('El insumo no está en la lista de solicitudes.', 'info')
-    return redirect(url_for('confirmar_solicitud_insumos'))
+        flash('El insumo no está en la lista de solicitudes','info')
+        return redirect(url_for('confirmar_solicitud_insumos'), code=303)
+
+    # ✅ CORRECCIÓN: Verificar si la lista está vacía DESPUÉS de eliminar
+    if not lista:
+        session.pop('lista_solicitudes', None)
+        session.pop('cantidades_solicitadas', None)
+        return redirect(url_for('solicitar_insumos'), code=303)
+
+    # Si aún hay insumos, actualizar sesión y continuar
+    session['lista_solicitudes'] = lista
+    session['cantidades_solicitadas'] = cantidades
+    return redirect(url_for('confirmar_solicitud_insumos'), code=303)
 
 
 # RUTAS DE EXPORTACIÓN A CSV. CADA RUTA REUTILIZA LA MISMA LOGICA DE CONSULTA QUE LA VISTA NORMAL

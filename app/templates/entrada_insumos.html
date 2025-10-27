@@ -1,39 +1,60 @@
 {% extends "base.html" %}
 {% block title %}Entradas de Insumos{% endblock %}
 {% block content %}
-<div class="page-container">
-    <h1>Entradas de Insumos</h1>
-    <form method="get" action="{{ url_for('entrada_insumos') }}">
-    <input type="text" name="filtro"class="filtro-input-page" placeholder="Buscar por fecha, proveedor o código..." value="{{ filtro }}">
-    <button type="submit" class="btn-filtrar filtro-btn">Filtrar</button>
-    </form>
-    <div class="table-scroll">
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Código</th>
-                    <th>Descripción</th>
-                    <th>Proveedor</th>
-                    <th>Cantidad</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for entrada in entradas %}
-                <tr>
-                    <td>{{ entrada.fecha_entrada.strftime('%d/%m/%Y') }}</td>
-                    <td>{{ entrada.insumo.codigo_insumo }}</td>
-                    <td>{{ entrada.insumo.descripcion }}</td>
-                    <td>{{ entrada.proveedor.nombre }}</td>
-                    <td>{{ entrada.cantidad }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+
+<div class="page-wrapper">
+    <div class="content-card content-card-large">
+        <h1 class="page-title">Entradas de Insumos</h1>
+        
+        <!-- Barra de búsqueda -->
+        <form method="GET" class="search-bar">
+            <input type="text" 
+                   name="filtro" 
+                   class="search-input" 
+                   placeholder="Buscar por fecha, proveedor, descripción o código..." 
+                   value="{{ request.args.get('filtro', '') }}">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </form>
+        
+        <!-- Tabla con scroll -->
+        <div class="table-wrapper">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                            <th>Proveedor</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entrada in entradas %}
+                        <tr>
+                            <td>{{ entrada.fecha_entrada.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ entrada.insumo.codigo_insumo }}</td>
+                            <td>{{ entrada.insumo.descripcion }}</td>
+                            <td>{{ entrada.proveedor.nombre }}</td>
+                            <td>{{ entrada.cantidad }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="btn-back-container">
+            <a href="{{ url_for('index') }}" class="btn-back">
+                ← Volver al menú
+            </a>
+        </div>
     </div>
-</div>    
-<div class="action-buttons-footer" style="max-width: 400px; margin: 10px auto 0 auto;">
-    <a class="btn-footer-outline" href="{{ url_for('index') }}">Volver al menú</a>
 </div>
-<a href="{{ url_for('exportar_entradas', filtro=filtro) }}" class="btn-export-fixed">Exportar a CSV</a>
+
+<!-- Botón flotante de exportar -->
+<a href="{{ url_for('exportar_entradas') }}" class="btn-export-fixed">
+    📊 Exportar a CSV
+</a>
+
 {% endblock %}

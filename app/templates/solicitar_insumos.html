@@ -1,41 +1,60 @@
 {% extends "base.html" %}
+{% block title %}Solicitar Insumos{% endblock %}
 {% block content %}
-<div class="menu-container">
-    <h1>Solicitar Insumos</h1>
-    <form method="get" action="{{ url_for('solicitar_insumos') }}">
-        <input type="text" name="filtro" class="filtro-input-menu" placeholder="Buscar insumo..." value="{{ filtro }}">
-        <button type="submit" class="btn-filtrar filtro-btn">Filtrar</button>
-    </form>
-    <div class="table-scroll">
-    <table>
-        <thead>
-            <tr>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>Stock</th>
-                <th>Acción</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for insumo in insumos %}
-            <tr>
-                <td>{{ insumo.codigo_insumo }}</td>
-                <td>{{ insumo.descripcion }}</td>
-                <td>{{ insumo.stock_actual }}</td>
-                <td>
-                    <form method="post" action="{{ url_for('agregar_insumos', insumo_id=insumo.id) }}">
-                        <button type="submit" class="btn-agregar">Agregar</button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    </div>
-<!-- Contenedor para los botones de acción -->
-    <div class="action-buttons-footer">
-        <a href="{{ url_for('confirmar_solicitud_insumos') }}" class="btn-footer-solid" style="background-color: #3b82f6">Solicitar</a>
-        <a href="{{ url_for('index') }}" class="btn-footer-solid" style="background-color: rgb(56, 56, 56); border-color: rgb(56, 56, 56);">Volver al menú</a>
+
+<div class="page-wrapper">
+    <div class="content-card content-card-large">
+        <h1 class="page-title">Solicitar Insumos</h1>
+        
+        <!-- Barra de búsqueda -->
+        <form method="GET" class="search-bar">
+            <input type="text" 
+                   name="filtro" 
+                   class="search-input" 
+                   placeholder="Buscar insumo por código o descripción..." 
+                   value="{{ request.args.get('filtro', '') }}">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </form>
+        
+        <!-- Tabla con scroll -->
+        <div class="table-wrapper">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                            <th>Stock</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for insumo in insumos %}
+                        <tr>
+                            <td>{{ insumo.codigo_insumo }}</td>
+                            <td>{{ insumo.descripcion }}</td>
+                            <td>{{ insumo.stock_actual }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('agregar_insumos', insumo_id=insumo.id) }}" style="display: inline;">
+                                    <button type="submit" class="btn btn-success btn-small">Agregar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="btn-back-container">
+            <a href="{{ url_for('confirmar_solicitud_insumos') }}" class="btn-forward" >
+                Solicitar →
+            </a>
+            <a href="{{ url_for('index') }}" class="btn-back">
+                ← Volver al menú
+            </a>
+        </div>
     </div>
 </div>
+
 {% endblock %}
