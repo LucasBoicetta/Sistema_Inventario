@@ -57,7 +57,7 @@ class User(UserMixin, db.Model):
     id_usuario = db.Column(db.Integer, primary_key=True, autoincrement=True)
     cedula = db.Column(db.Integer, unique=True, nullable=False)
     nombre = db.Column(db.String(100), nullable=False)
-    password = db.Column(db.String(128), nullable=False)
+    password = db.Column(db.String(256), nullable=False)
     id_rol = db.Column(db.Integer, db.ForeignKey('roles.id_rol'), nullable=False)
     id_dependencia = db.Column(db.Integer, db.ForeignKey('dependencia.id_dependencia'), nullable=False)
 

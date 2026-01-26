@@ -1,9 +1,10 @@
 from app import app, db
 from flask import render_template, redirect, url_for, flash, request, session, Response
 from flask_login import current_user, login_user, logout_user, login_required
-from app.forms import CargarInsumoForm,LoginForm
+from app.forms import CargarInsumoForm,LoginForm, EntregarSolicitudForm
 from app.models import Insumo, EntradaInsumo, SalidaInsumo, SolicitudInsumo, User, SolicitudDetalle, Proveedor, Rol, Dependencia
 from app.decorators import admin_required
+from app.services.inventory_services import InventoryService
 from sqlalchemy import or_
 import sqlalchemy as sa
 import csv
@@ -45,50 +46,16 @@ def consultar_inventario():
 def cargar_insumos():
     form = CargarInsumoForm()
     if form.validate_on_submit():
-        if not form.proveedor.data or not form.proveedor.data.strip():
-            flash('Debes ingresar el proveedor para registrar la entrada.', 'danger')
-            return render_template('cargar_insumos.html', form=form)
-        
-        insumo=db.session.scalar(sa.select(Insumo)
-                                 .where(Insumo.codigo_insumo==form.codigo_producto.data))
-        if insumo:
-            insumo.stock_actual+=form.cantidad_entradas.data
-            if insumo.cantidad_entradas is None:
-                insumo.cantidad_entradas=0
-            insumo.cantidad_entradas+=form.cantidad_entradas.data
-            db.session.commit()
-            flash(f'Se han actualizado las existencias del insumo {insumo.codigo_insumo}.', 'success')
-        else:
-            if not form.descripcion.data or not form.descripcion.data.strip():
-                flash('Para un insumo nuevo, debes ingresar una descripción y proveedor.', 'danger')
-                return render_template('cargar_insumos.html', form=form)
-            
-            nuevo_insumo = Insumo(
-                codigo_insumo=form.codigo_producto.data,
-                descripcion=form.descripcion.data,
-                stock_actual=form.cantidad_entradas.data,
-                existencias_iniciales_anio=form.cantidad_entradas.data
-            )
-            db.session.add(nuevo_insumo)
-            db.session.commit()
-            flash(f'Se ha agregado un nuevo insumo: {nuevo_insumo.codigo_insumo}.', 'success')
-        
-        proveedor = db.session.scalar(sa.select(Proveedor)
-                                         .where(Proveedor.nombre == form.proveedor.data))
-        if not proveedor:
-            proveedor = Proveedor(nombre=form.proveedor.data)
-            db.session.add(proveedor)
-            db.session.commit()
-
-        nueva_entrada = EntradaInsumo(
-            id_proveedor=proveedor.id_proveedor,
-            cantidad=form.cantidad_entradas.data,                
-            id_insumo=insumo.id if insumo else nuevo_insumo.id,
+        #Llamamos al servicio pasando los datos del formulario.
+        insumo, mensaje, categoria = InventoryService.cargar_insumos(
+            codigo_insumo=form.codigo_producto.data,
+            cantidad=form.cantidad_entradas.data,
+            nombre_proveedor=form.proveedor.data,
+            descripcion=form.descripcion.data
         )
-        db.session.add(nueva_entrada)
-        db.session.commit()
-        flash(f'Entrada registrada: {form.cantidad_entradas.data} unidades de {proveedor.nombre}', 'info')
-        return redirect(url_for('index'))
+        flash(mensaje, categoria)
+        if insumo:
+            return redirect(url_for('index'))
     return render_template('cargar_insumos.html', form=form)
 
 # RUTA PARA SOLICITAR INSUMOS, MUESTRA UNA TABLA DE INSUMOS CON UN BOTON PARA SOLICITAR
@@ -129,7 +96,7 @@ def ver_solicitudes():
     ).all()
     if not solicitudes_pendientes:
         flash('No hay solicitudes pendientes.', 'info')
-    
+
     solicitudes_completadas_usuario = db.session.scalars( 
         sa.select(SolicitudInsumo)
         .where(SolicitudInsumo.id_usuario == current_user.id_usuario)
@@ -138,7 +105,9 @@ def ver_solicitudes():
     ).all()
     print("Solicitudes completadas para PDF:", [s.id_solicitud for s in solicitudes_completadas_usuario])
 
-    return render_template('ver_solicitudes.html', solicitudes_pendientes=solicitudes_pendientes, solicitudes_completadas_usuario=solicitudes_completadas_usuario, filtro=filtro)
+    form_entrega = EntregarSolicitudForm()
+
+    return render_template('ver_solicitudes.html', solicitudes_pendientes=solicitudes_pendientes, solicitudes_completadas_usuario=solicitudes_completadas_usuario, filtro=filtro, form=form_entrega)
 
 # LOGICA COMPLETA DETRÁS DE LA ACCION DE ENTREGAR UNA SOLICITUD
 # SE ACTUALIZA EL STOCK, SE CREA EL REGISTRO DE SALIDA, SE ACTUALIZA EL ESTADO DE LA SOLICITUD
@@ -146,53 +115,24 @@ def ver_solicitudes():
 @app.route('/entregar_solicitud/<int:detalle_id>', methods=['POST'])
 @admin_required
 def entregar_solicitud(detalle_id):
-    # Obtenemos el detalle específico usando el detalle_id
-    detalle = db.session.get(SolicitudDetalle, detalle_id)
-    if not detalle:
-        flash('El ítem de la solicitud no existe.', 'danger')
-        return redirect(url_for('ver_solicitudes'))
+    #Capturamos los datos.
+    form = EntregarSolicitudForm()
+    if form.validate_on_submit():
+        cantidad_entregada = form.cantidad_entregada.data
+        observaciones = form.observaciones.data
 
-    # Obtenemos la solicitud y el insumo a partir del detalle
-    solicitud = detalle.solicitud
-    insumo = detalle.insumo
-    
-    cantidad_entregada = request.form.get('cantidad_entregada', type=int, default=detalle.cantidad_solicitada)
-    observaciones = request.form.get('observaciones', type=str, default='')
-
-    if cantidad_entregada > insumo.stock_actual:
-        flash(f'No hay suficiente stock para entregar {insumo.descripcion}. Stock actual: {insumo.stock_actual}.', 'danger')
-        return redirect(url_for('ver_solicitudes'))
-    
-    if cantidad_entregada > detalle.cantidad_solicitada:
-        flash('La cantidad entregada no puede ser mayor a la cantidad solicitada.', 'danger')
-        return redirect(url_for('ver_solicitudes'))
-
-    # Crear la salida para este detalle específico
-    nueva_salida = SalidaInsumo(
-        cantidad_entregada=cantidad_entregada,
-        id_usuario=solicitud.id_usuario,
-        id_insumo=insumo.id,
-        id_solicitudes_insumos=detalle.id_solicitudes_insumos,
-        observaciones=observaciones
-    )
-    db.session.add(nueva_salida)
-
-    # Actualizar el stock del insumo
-    insumo.stock_actual -= cantidad_entregada
-    if insumo.cantidad_salidas is None:
-        insumo.cantidad_salidas = 0
-    insumo.cantidad_salidas += cantidad_entregada
-    if (insumo.existencias_iniciales_anio + insumo.cantidad_entradas) > 0:
-        insumo.porcentaje_utilizado = (insumo.cantidad_salidas / (insumo.existencias_iniciales_anio + insumo.cantidad_entradas)) * 100
-
-    # Actualizar el estado de la solicitud
-    todos_entregados = all(len(d.salidas) > 0 for d in solicitud.detalles)
-    if todos_entregados:
-        solicitud.estado = True
-
-    db.session.commit()
-    flash(f'Insumo "{insumo.descripcion}" entregado y registrado como salida.', 'success')
-    
+        #Llamamos al servicio.
+        exito, mensaje, categoria = InventoryService.entregar_item_solicitud(
+            detalle_id=detalle_id,
+            cantidad_entregada=cantidad_entregada,
+            observaciones=observaciones
+        )
+        flash(mensaje, categoria)
+    else:
+        #Si falla la validacion (ej:token vencido, dato invalido)
+        errores = ", ".join([f"{k}: {', '.join(v)}" for k,v in form.errors.items()])
+        flash(f'Error en el formulario: {errores}', 'danger')
+        
     return redirect(url_for('ver_solicitudes'))
 
 # RUTA QUE MUESTRA LA TABLA CON TODAS LAS SALIDAS DE INSUMOS
@@ -514,7 +454,7 @@ def generar_pdf_solicitud(solicitud_id):
 
     # --- LOGO GRANDE CENTRADO ---
     # Ajusta el tamaño y posición del logo para que ocupe el espacio del título
-    logo_path = "app/static/logo.png"
+    logo_path = "app/static/logoSindicaturaNew-removebg-preview.png"
     logo_width = 300  # más grande
     logo_height = 90
     logo_x = (width - logo_width) / 2
