@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Gestionar Entregas{% endblock %}
+{% block content %}
+
+<div class="page-wrapper">
+    <div class="content-card content-card-large">
+        <h1 class="page-title">Solicitudes Pendientes de Entrega</h1>
+        
+        <!-- Barra de búsqueda -->
+        <form method="GET" class="search-bar">
+            <input type="text" name="filtro" class="search-input" 
+                   placeholder="Buscar solicitud por N°..." 
+                   value="{{ filtro }}">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </form>
+        
+        {% if solicitudes %}
+        <div class="table-wrapper">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>N°</th>
+                            <th>Fecha</th>
+                            <th>Solicitante</th>
+                            <th>Insumo</th>
+                            <th>Cantidad</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in solicitudes %}
+                            <!-- Iteramos los detalles aquí, igual que antes -->
+                            {% for detalle in solicitud.detalles %}
+                                {% if not detalle.salidas %}
+                                <tr>
+                                    <td>{{ solicitud.id_solicitud }}</td>
+                                    <td>{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        <strong>{{ solicitud.usuario.nombre }}</strong><br>
+                                        <small>{{ solicitud.usuario.dependencia.nombre_dependencia }}</small>
+                                    </td>
+                                    <td>{{ detalle.insumo.descripcion }}</td>
+                                    <td>{{ detalle.cantidad_solicitada }}</td>
+                                    <td>
+                                        <form method="POST" 
+                                              action="{{ url_for('orders.entregar_solicitud', detalle_id=detalle.id_solicitudes_insumos) }}" 
+                                              style="display: flex; gap: 0.5rem; align-items: center;">
+                                            {{ form.hidden_tag() }}
+                                            
+                                            <!-- Inputs compactos -->
+                                            {{ form.cantidad_entregada(class="quantity-input", style="width: 70px;", max=detalle.cantidad_solicitada, value=detalle.cantidad_solicitada) }}
+                                            {{ form.observaciones(class="observation-input", style="width: 150px;", placeholder="Observación...") }}
+                                            
+                                            <button type="submit" class="btn btn-success btn-small">
+                                                ✔ Entregar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Paginación Estándar -->
+        <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('orders.solicitudes_pendientes', page=pagination.prev_num, filtro=filtro) }}" class="btn btn-secondary">Anterior</a>
+            {% endif %}
+            <span style="margin: 0 10px;">Página {{ pagination.page }} de {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+                <a href="{{ url_for('orders.solicitudes_pendientes', page=pagination.next_num, filtro=filtro) }}" class="btn btn-secondary">Siguiente</a>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <div class="empty-state">
+            <p>✅ No hay solicitudes pendientes de entrega.</p>
+        </div>
+        {% endif %}
+
+        <div class="btn-back-container">
+            <a href="{{ url_for('main.index') }}" class="btn-back">← Volver al menú</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

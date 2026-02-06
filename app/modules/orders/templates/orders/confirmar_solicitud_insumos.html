@@ -23,7 +23,7 @@
                     </thead>
                     <tbody>
                         {% for insumo in insumos %}
-                        <tr>
+                        <tr data-insumo-id="{{ insumo.id }}">
                             <td>{{ loop.index }}</td>
                             <td>{{ insumo.codigo_insumo }}</td>
                             <td>{{ insumo.descripcion }}</td>
@@ -41,9 +41,8 @@
                             </td>
                             <td>
                                 <form method="POST" 
-                                      action="{{ url_for('eliminar_insumo_lista', insumo_id=insumo.id) }}" 
-                                      style="display: inline;"
-                                      onsubmit="return copiarCantidades(this);">
+                                      action="{{ url_for('orders.eliminar_insumo_lista', insumo_id=insumo.id) }}" 
+                                      class="ajax-delete-form">
                                     <button type="submit" class="btn btn-danger btn-small">
                                         Eliminar
                                     </button>
@@ -65,10 +64,10 @@
         </div>
         
         <!-- ✅ Formulario de confirmar al final, FUERA de la tabla -->
-        <form method="POST" id="confirmar-form" action="{{ url_for('confirmar_solicitud_insumos') }}">
-            <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
+        <form method="POST" id="confirmar-form" action="{{ url_for('orders.confirmar_solicitud_insumos') }}">
+            <div class="btn-back-container">
                 <button type="submit" class="btn btn-primary">Confirmar</button>
-                <a href="{{ url_for('solicitar_insumos') }}" class="btn btn-secondary">Volver atrás</a>
+                <a href="{{ url_for('orders.solicitar_insumos') }}" class="btn btn-secondary">Volver atrás</a>
             </div>
         </form>
         
@@ -82,65 +81,18 @@
                 No hay insumos en la lista de solicitud.<br>
                 Agrega insumos para poder realizar una solicitud.
             </p>
-            <a href="{{ url_for('solicitar_insumos') }}" class="btn btn-primary">
+            <a href="{{ url_for('orders.solicitar_insumos') }}" class="btn btn-primary">
                 Agregar insumos
             </a>
         </div>
         {% endif %}
         
         <div class="btn-back-container">
-            <a href="{{ url_for('index') }}" class="btn-back">
+            <a href="{{ url_for('main.index') }}" class="btn-back">
                 ← Volver al menú
             </a>
         </div>
     </div>
 </div>
-
-<script>
-function copiarCantidades(form) {
-    try {
-        // Copiar todas las cantidades visibles a los inputs ocultos del form de eliminar
-        document.querySelectorAll('input[type="number"][name^="cantidad_"]').forEach(function(input) {
-            var hidden = form.querySelector('input[name="' + input.name + '"]');
-            if (hidden) {
-                hidden.value = input.value;
-                console.log('Copiando', input.name, 'valor:', input.value);
-            }
-        });
-        return true; // ✅ Siempre permite eliminar
-    } catch (e) {
-        console.error('Error en copiarCantidades:', e);
-        return false;
-    }
-}
-
-// ✅ Validar SOLO cuando se envía el formulario de confirmar
-document.getElementById('confirmar-form').addEventListener('submit', function(e) {
-    let valid = true;
-    let emptyInputs = [];
-    
-    document.querySelectorAll('.quantity-input').forEach(function(input) {
-        if (!input.value || input.value < 1 || input.value > parseInt(input.max)) {
-            input.style.borderColor = 'var(--danger-color)';
-            input.style.boxShadow = '0 0 5px var(--danger-color)';
-            valid = false;
-            emptyInputs.push(input);
-        } else {
-            input.style.borderColor = '';
-            input.style.boxShadow = '';
-        }
-    });
-    
-    if (!valid) {
-        e.preventDefault();
-        alert('Por favor, ingresa cantidades válidas para todos los insumos.');
-        // Hacer focus en el primer input inválido
-        if (emptyInputs.length > 0) {
-            emptyInputs[0].focus();
-        }
-        return false;
-    }
-});
-</script>
 
 {% endblock %}

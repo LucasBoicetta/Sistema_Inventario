@@ -3,7 +3,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 from flask import redirect, url_for, flash
 from app import app, db
-from app.models import User, Insumo, SolicitudInsumo, SalidaInsumo, EntradaInsumo, SolicitudDetalle, Proveedor, Rol, Dependencia
+from app.shared.models import User, Insumo, SolicitudInsumo, SalidaInsumo, EntradaInsumo, SolicitudDetalle, Proveedor, Rol, Dependencia
 
 class AdminOnlyModelView(ModelView):
     def is_accessible(self):

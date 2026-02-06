@@ -12,7 +12,7 @@
         <div class="content-card content-card-small">
             <h1 class="page-title">Iniciar Sesión</h1>
             
-            <form method="POST" action="{{ url_for('login') }}">
+            <form method="POST" action="{{ url_for('auth.login') }}">
                 {{ form.hidden_tag() }}
                 
                 <div class="form-group">

@@ -43,9 +43,20 @@
                 </table>
             </div>
         </div>
-        
+        <!-- Paginación -->
+         <div class="pagination-controls">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('inventory.entrada_insumos', page=pagination.prev_num, filtro=filtro) }}" class="btn btn-secondary">Anterior</a>
+            {% endif %}
+
+            <span>Página {{ pagination.page }} de {{ pagination.pages }}</span>
+            
+            {% if pagination.has_next %}
+                <a href="{{ url_for('inventory.entrada_insumos', page=pagination.next_num, filtro=filtro) }}" class="btn btn-secondary">Siguiente</a>
+            {% endif %}
+         </div>
         <div class="btn-back-container">
-            <a href="{{ url_for('index') }}" class="btn-back">
+            <a href="{{ url_for('main.index') }}" class="btn-back">
                 ← Volver al menú
             </a>
         </div>
@@ -53,7 +64,7 @@
 </div>
 
 <!-- Botón flotante de exportar -->
-<a href="{{ url_for('exportar_entradas') }}" class="btn-export-fixed">
+<a href="{{ url_for('inventory.exportar_entradas') }}" class="btn-export-fixed">
     📊 Exportar a CSV
 </a>
 

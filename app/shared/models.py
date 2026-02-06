@@ -1,8 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime, timezone
+from sqlalchemy import or_
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import app, db, login
+from app import app, db, login, jwt
 
 # --- Tablas auxiliares ---
 
@@ -44,6 +45,21 @@ class Insumo(db.Model):
     detalles_solicitud = db.relationship('SolicitudDetalle', backref='insumo', lazy=True)
     salidas = db.relationship('SalidaInsumo', backref='insumo', lazy=True)
 
+    @classmethod
+    def filtro_insumos(cls, filtro: str):
+        """Método de clase para filtrar insumos por código o descripción."""
+        query = cls.query
+        if filtro:
+            search_str = f"%{filtro}%"
+            query = query.filter(
+                or_(
+                    cls.codigo_insumo.ilike(search_str),
+                    cls.descripcion.ilike(search_str)
+                )
+            )
+        return query.order_by(cls.codigo_insumo)
+
+
 class EntradaInsumo(db.Model):
     __tablename__ = 'entrada_insumos'
     id_entrada = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -51,6 +67,22 @@ class EntradaInsumo(db.Model):
     cantidad = db.Column(db.Integer, nullable=False)
     id_insumo = db.Column(db.Integer, db.ForeignKey('insumos.id'), nullable=False)
     id_proveedor = db.Column(db.Integer, db.ForeignKey('proveedores.id_proveedor'), nullable=False)
+
+    @classmethod
+    def filtro_entradas_insumos(cls, filtro: str):
+        """Método de clase para filtrar entradas de insumos por proveedor, codigo o descripción"""
+        query = cls.query.join(Proveedor).join(Insumo)
+        if filtro:
+            search_str = f"%{filtro}%"
+            query = query.filter(
+                or_(
+                    Proveedor.nombre.ilike(search_str),
+                    Insumo.codigo_insumo.ilike(search_str),
+                    Insumo.descripcion.ilike(search_str)
+                )
+            )
+        return query.order_by(cls.fecha_entrada.desc())
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'usuarios'
@@ -73,6 +105,10 @@ class User(UserMixin, db.Model):
     @property
     def id(self):
         return self.id_usuario
+    
+    @property
+    def is_authenticated(self):
+        return True #Si tengo el objeto User cargardo por JWT, es que está autenticado.
 
 @login.user_loader
 def load_user(id_usuario):
@@ -86,6 +122,33 @@ class SolicitudInsumo(db.Model):
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=False)
 
     detalles = db.relationship('SolicitudDetalle', backref='solicitud', lazy=True)
+
+    @classmethod
+    def obtener_solicitudes_pendientes(cls, filtro: str = None):
+        """Devuelve las solicitudes pendientes para que un administrador pueda entregarlas."""
+        #Eager load para evitar N+1 queries al mostrar usuario/dependencia.
+        query = cls.query.options(
+            db.joinedload(cls.usuario).joinedload(User.dependencia)
+        ).filter(cls.estado == False)  # Solo pendientes
+
+        if filtro:
+            #Intentamos filtrar por número de solicitud.
+            if filtro.isdigit():
+                query = query.filter(cls.id_solicitud == int(filtro))
+            else:
+                query = query.join(User).filter(User.nombre.ilike(f"%{filtro}%") )
+        
+        return query.order_by(cls.fecha_solicitud.asc())
+
+
+    @classmethod
+    def obtener_solicitudes_completadas(cls, id_usuario: int):
+        """Devuelve el reporte de las solicitudes entregadas a un usuario."""
+        #Lógica: Una solicitud está completa si TODOS sus detalles tienen al menos UNA salida asociada.
+        return cls.query.filter(
+            cls.id_usuario == id_usuario,
+            ~cls.detalles.any(SolicitudDetalle.salidas == None)
+        ).order_by(cls.fecha_solicitud.desc())
 
 class SolicitudDetalle(db.Model):
     __tablename__ = 'solicitudes_insumos'
@@ -105,3 +168,27 @@ class SalidaInsumo(db.Model):
     id_insumo = db.Column(db.Integer, db.ForeignKey('insumos.id'), nullable=False)
     id_solicitudes_insumos = db.Column(db.Integer, db.ForeignKey('solicitudes_insumos.id_solicitudes_insumos'), nullable=False)
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=False)
+
+    @classmethod
+    def filtro_salidas_insumos(cls, filtro: str):
+        """Método para filtrar salidas de insumos por usuario, dependencia codigo o descripción"""
+        #1. Query base con Eager Loading (para performance al mostrar).
+        query = cls.query.options(
+            db.joinedload(cls.usuario).joinedload(User.dependencia),
+            db.joinedload(cls.insumo)
+        )
+        #2. Join explícitos.
+        query = query.join(User).join(Insumo).join(Dependencia)
+
+        if filtro:
+            search_str = f"%{filtro}%"
+            query = query.filter(
+                or_(
+                    User.nombre.ilike(search_str),
+                    Dependencia.nombre_dependencia.ilike(search_str),
+                    Insumo.codigo_insumo.ilike(search_str),
+                    Insumo.descripcion.ilike(search_str)
+                )
+            )
+            
+        return query.order_by(cls.fecha_salida.desc())

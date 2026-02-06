@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Solicitar Insumos{% endblock %}
+{% block title %}Inventario de Insumos{% endblock %}
 {% block content %}
 
 <div class="page-wrapper">
     <div class="content-card content-card-large">
-        <h1 class="page-title">Solicitar Insumos</h1>
+        <h1 class="page-title">Inventario de Insumos</h1>
         
         <!-- Barra de búsqueda -->
         <form method="GET" class="search-bar">
@@ -24,8 +24,11 @@
                         <tr>
                             <th>Código</th>
                             <th>Descripción</th>
-                            <th>Stock</th>
-                            <th>Acción</th>
+                            <th>Existencias Iniciales</th>
+                            <th>Entradas</th>
+                            <th>Salidas</th>
+                            <th>Porcentaje Utilizado</th>
+                            <th>Stock Actual</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -33,28 +36,37 @@
                         <tr>
                             <td>{{ insumo.codigo_insumo }}</td>
                             <td>{{ insumo.descripcion }}</td>
+                            <td>{{ insumo.existencias_iniciales_anio or 0 }}</td>
+                            <td>{{ insumo.cantidad_entradas or 0 }}</td>
+                            <td>{{ insumo.cantidad_salidas or 0 }}</td>
+                            <td>{{ "%.2f"|format(insumo.porcentaje_utilizado or 0) }}%</td>
                             <td>{{ insumo.stock_actual }}</td>
-                            <td>
-                                <form method="POST" action="{{ url_for('agregar_insumos', insumo_id=insumo.id) }}" style="display: inline;">
-                                    <button type="submit" class="btn btn-success btn-small">Agregar</button>
-                                </form>
-                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-        
+        <div class="pagination-controls">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('inventory.consultar_inventario', page=pagination.prev_num, filtro=filtro) }}" class="btn btn-secondary">Anterior</a>
+            {% endif %}
+            <span>Página {{ pagination.page }} de {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+                <a href="{{ url_for('inventory.consultar_inventario', page=pagination.next_num, filtro=filtro) }}" class="btn btn-secondary">Siguiente</a>
+            {% endif %}
+        </div>
         <div class="btn-back-container">
-            <a href="{{ url_for('confirmar_solicitud_insumos') }}" class="btn-forward" >
-                Solicitar →
-            </a>
-            <a href="{{ url_for('index') }}" class="btn-back">
+            <a href="{{ url_for('main.index') }}" class="btn-back">
                 ← Volver al menú
             </a>
         </div>
     </div>
 </div>
+
+<!-- Botón flotante de exportar -->
+<a href="{{ url_for('inventory.exportar_inventario') }}" class="btn-export-fixed">
+    📊 Exportar a CSV
+</a>
 
 {% endblock %}

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <div id="toast-container"></div>
     <div class="container">
         {% block content %}{% endblock %}
     </div>
@@ -23,12 +24,18 @@
     {% endwith %}
 
     <script>
+      //Auto-ocultar flashes tradicionales.
       setTimeout(function() {
-        document.querySelectorAll('.flash').forEach(function(el) {
+        document.querySelectorAll('.flash').forEach(function(el){
           el.style.opacity = '0';
           setTimeout(function(){ el.style.display = 'none'; }, 600);
         });
       }, 3500);
+
     </script>
+    <!-- Script del carrito AJAX (solo en páginas relevantes) -->
+    {% if request.endpoint in ['orders.solicitar_insumos', 'orders.confirmar_solicitud_insumos']%}
+    <script src="{{ url_for('static', filename='js/carrito_solicitudes.js') }}"></script>
+    {% endif %}
 </body>
 </html>

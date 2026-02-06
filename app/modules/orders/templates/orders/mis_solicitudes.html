@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Mis Solicitudes{% endblock %}
+{% block content %}
+
+<div class="page-wrapper">
+    <div class="content-card content-card-large">
+        <h1 class="page-title">Historial de Solicitudes</h1>
+        
+        {% if solicitudes %}
+        <div class="table-wrapper">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>N° Solicitud</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Documentos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solicitud in solicitudes %}
+                        <tr>
+                            <td>#{{ solicitud.id_solicitud }}</td>
+                            <td>{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <span class="badge badge-success">Completada</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('orders.generar_pdf_solicitud', solicitud_id=solicitud.id_solicitud) }}" 
+                                   class="btn btn-outline-primary btn-small"
+                                   target="_blank">
+                                    📄 Descargar PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Paginación de Usuario -->
+        <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('orders.mis_solicitudes', page=pagination.prev_num) }}" class="btn btn-secondary">Anterior</a>
+            {% endif %}
+            <span>Página {{ pagination.page }} de {{ pagination.pages }}</span>
+            {% if pagination.has_next %}
+                <a href="{{ url_for('orders.mis_solicitudes', page=pagination.next_num) }}" class="btn btn-secondary">Siguiente</a>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <div class="empty-state" style="text-align: center; padding: 40px;">
+            <h3>📂 Sin historial</h3>
+            <p>Aún no tienes solicitudes completadas.</p>
+            <a href="{{ url_for('orders.solicitar_insumos') }}" class="btn btn-primary">Nueva Solicitud</a>
+        </div>
+        {% endif %}
+
+        <div class="btn-back-container">
+            <a href="{{ url_for('main.index') }}" class="btn-back">← Volver al menú</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

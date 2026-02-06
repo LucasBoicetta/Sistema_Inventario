@@ -1,0 +1,39 @@
+Cosas a implementar en el futuro: 
+1. Arreglar el DoS del CSV (Streaming):
+Usa generadores de Python para no cargar todo en memoria. Flask soporta esto nativamente.
+def generar_csv_inventario_stream(filtro=''):
+    def generate():
+        # Yield headers
+        yield "ID,Código,Descripción,Stock\n"
+        
+        # Iterar eficientemente sin cargar todo (yield_per)
+        # Requiere que la DB soporte cursores server-side (Postgres lo hace)
+        query = Insumo.filtro_insumos(filtro)
+        for insumo in query.yield_per(1000):
+            # Sanitización básica de CSV Injection
+            desc = str(insumo.descripcion).replace('"', '""')
+            if desc.startswith(('=', '+', '-', '@')):
+                desc = "'" + desc
+            
+            yield f'{insumo.id},{insumo.codigo_insumo},"{desc}",{insumo.stock_actual}\n'
+            
+    return generate # Retornamos el GENERADOR, no el string
+
+
+return Response(
+    InventoryService.generar_csv_inventario_stream(filtro), # Llamamos a la nueva función
+    mimetype="text/csv",
+    # ... headers ...
+)
+
+B. CSV Injection (Formula Injection)
+Si un usuario malintencionado carga un insumo con la descripción: =cmd|' /C calc'!A0, y un administrador descarga el Excel y lo abre, el Excel intentará ejecutar comandos en la PC del administrador.
+Solución: Sanitizar los campos de texto al exportar (poner una comilla simple ' al inicio si empieza con =, +, -, @).
+
+===========================================================
+Tu InventoryService está haciendo dos cosas muy distintas:
+
+Reglas de Negocio: Calcular stock, validar positivos (CPU bound/DB bound).
+Formateo de Datos: Generar Strings CSV (IO bound).
+El servicio sabe demasiado sobre cómo se exportan los datos. Si mañana quieres exportar a PDF o Excel (.xlsx), tendrás que ensuciar más el servicio.
+============================================================

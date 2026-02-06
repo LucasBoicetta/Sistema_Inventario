@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timedelta
 from app import app, db
-from app.models import User, Rol, Dependencia, Insumo, Proveedor, SolicitudInsumo, SolicitudDetalle, EntradaInsumo, SalidaInsumo
+from app.shared.models import User, Rol, Dependencia, Insumo, Proveedor, SolicitudInsumo, SolicitudDetalle, EntradaInsumo, SalidaInsumo
 
 def seed_data():
     with app.app_context():
