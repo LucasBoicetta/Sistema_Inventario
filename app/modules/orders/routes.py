@@ -4,7 +4,7 @@ from app import db
 from app.shared.models import Insumo, SolicitudInsumo
 from app.shared.decorators import jwt_required_html, admin_required
 from app.shared.errors import DomainError, InsufficientStockError, OrderNotReadyError
-from app.shared.utils import is_ajax_request
+from app.shared.utils import is_ajax_request, get_cart_key, get_quantities_key
 from .services import OrderProductService
 from .forms import EntregarSolicitudForm
 from . import orders_bp
@@ -25,7 +25,8 @@ def solicitar_insumos():
     #2. Paginar la query.
     pagination = db.paginate(query, page=page, per_page=per_page, error_out=False)
     #Pasamos las Ids que ya están en el carrito.
-    carrito_ids = session.get('lista_solicitudes', [])
+    cart_key = get_cart_key()
+    carrito_ids = session.get(cart_key, [])
 
     return render_template('orders/solicitar_insumos.html', insumos=pagination.items, filtro=filtro,
                             pagination=pagination, carrito_ids=carrito_ids)
@@ -35,12 +36,14 @@ def solicitar_insumos():
 @jwt_required_html()
 def agregar_insumos(insumo_id):
     """Agrega un insumo a la lista de solicitudes en sesión."""
-    lista=session.get('lista_solicitudes', [])
+    cart_key = get_cart_key()
+    lista=session.get(cart_key, [])
     
     exito, mensaje, categoria = OrderProductService.agregar_insumos_solicitud(lista, insumo_id)
 
     if exito:
-        session['lista_solicitudes'] = lista
+        session[cart_key] = lista
+        session.modified = True #Buena práctica: indicar que la sesión fue modificada para asegurar que se guarde correctamente.
 
     #Deteccion de petición AJAX
 
@@ -54,15 +57,21 @@ def agregar_insumos(insumo_id):
         })
     
     flash(mensaje, categoria)
-    return redirect(url_for('orders.solicitar_insumos'))
+    #Preservar parametros de paginacion y filtro.
+    page = request.args.get('page', 1, type=int)
+    filtro = request.args.get('filtro', '')
+    return redirect(url_for('orders.solicitar_insumos', page=page, filtro=filtro))
 
 
 @orders_bp.route('/eliminar_insumo_lista/<int:insumo_id>', methods=['POST'])
 @jwt_required_html()
 def eliminar_insumo_lista(insumo_id):
     """Elimina un insumo de la lista de solicitudes en sesión."""
-    lista=session.get('lista_solicitudes', [])
-    cantidades=session.get('cantidades_solicitadas', {})
+    cart_key = get_cart_key()
+    quantities_key = get_quantities_key()
+    
+    lista=session.get(cart_key, [])
+    cantidades=session.get(quantities_key, {})
 
     # Guardar cantidades actuales (solo en modo HTML tradicional )
   
@@ -76,8 +85,8 @@ def eliminar_insumo_lista(insumo_id):
 
     #Si fue exitoso, actualizar sesión.
     if exito:
-        session['lista_solicitudes'] = lista
-        session['cantidades_solicitadas'] = cantidades
+        session[cart_key] = lista
+        session[quantities_key] = cantidades
     
 
     if is_ajax_request():
@@ -99,8 +108,11 @@ def eliminar_insumo_lista(insumo_id):
 @jwt_required_html()
 def confirmar_solicitud_insumos():
     """Muestra la lista de insumos seleccionados para confirmar la solicitud."""
-    lista = session.get('lista_solicitudes', [])
-    cantidades = session.get('cantidades_solicitadas', {})
+    cart_key = get_cart_key()
+    quantities_key = get_quantities_key()
+
+    lista = session.get(cart_key, [])
+    cantidades = session.get(quantities_key, {})
 
     #Controlamos la situación de llegar a esta ruta sin insumos en la lista.
     if not lista:
@@ -114,14 +126,14 @@ def confirmar_solicitud_insumos():
             if cantidad and cantidad>0:
                 cantidades[str(insumo_id)] = cantidad
         
-        session['cantidades_solicitadas'] = cantidades
+        session[quantities_key] = cantidades
 
         try:
             #Llamamos al servicio para crear la solicitud.
             OrderProductService.crear_solicitud_insumos(current_user.id_usuario, lista, cantidades)
             #Si no lanza excepción, es que se creó exitosamente.
-            session.pop('lista_solicitudes', None)
-            session.pop('cantidades_solicitadas', None)
+            session.pop(cart_key, None)
+            session.pop(quantities_key, None)
             flash("Solicitud creada exitosamente.", 'success')
             return redirect(url_for('orders.mis_solicitudes'))
 
@@ -208,8 +220,10 @@ def entregar_solicitud(detalle_id):
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f"Error en el campo {getattr(form, field).label.text}: {error}", 'warning')
-       
-    return redirect(url_for('orders.solicitudes_pendientes'))
+    
+    page = request.form.get('page', 1, type=int)
+    filtro = request.form.get('filtro', '')
+    return redirect(url_for('orders.solicitudes_pendientes', page=page, filtro=filtro))
 
 
 @orders_bp.route('/generar_pdf/<int:solicitud_id>')

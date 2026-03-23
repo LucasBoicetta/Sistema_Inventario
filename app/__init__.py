@@ -7,6 +7,7 @@ from config import Config
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+from flask_wtf import CSRFProtect
 
 #1. Inicialización de la app.
 app = Flask(__name__)
@@ -39,6 +40,7 @@ migrate = Migrate(app, db)
 login=LoginManager(app)
 login.login_view='auth.login'
 jwt = JWTManager(app)
+csrf = CSRFProtect(app)
 
 #4. Registro de Blueprints.
 from app.modules.auth import auth_bp

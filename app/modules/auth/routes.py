@@ -1,5 +1,5 @@
 from app import db
-from flask import render_template, redirect, url_for, flash, request , make_response
+from flask import render_template, redirect, url_for, flash, request , make_response, session
 from flask_jwt_extended import current_user
 from app.shared.models import User
 from .forms import LoginForm
@@ -77,8 +77,11 @@ def cambiar_contraseña():
 @auth_bp.route('/logout')
 @jwt_required_html()
 def logout():
-    resp = make_response(redirect(url_for('auth.login')))
+    #Limpia toda la sesión y las cookies JWT.
+    session.clear()
+
     #Flask-JWT elimina las cookies por nosotros.
+    resp = make_response(redirect(url_for('auth.login')))
     unset_jwt_cookies(resp)
     flash('Se ha cerrado la sesión correctamente.', 'success')
     return resp

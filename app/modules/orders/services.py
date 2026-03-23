@@ -132,7 +132,7 @@ class OrderProductService:
                 logger.info(f"Solicitud #{solicitud.id_solicitud} marcada como completada.")
 
             db.session.commit()
-            return True, f'Salida registrada: {msg}', 'success'
+            return True, f'{msg}', 'success'
         
         except InsufficientStockError as e:
             db.session.rollback()

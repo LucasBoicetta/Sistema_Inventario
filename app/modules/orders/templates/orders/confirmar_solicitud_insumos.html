@@ -1,98 +1,414 @@
+{# ✅ CONFIGURACIÓN DE LAYOUT #}
+{% set layout_max_width = "max-w-[1600px]" %}
+{% set layout_padding = "p-10" %}
+{% set layout_spacing = "" %}
+
 {% extends "base.html" %}
-{% block title %}Confirmar Solicitud de Insumos{% endblock %}
+{% block title %}Confirmar Solicitud{% endblock %}
+
+{% block header_search %}
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <a href="{{ url_for('orders.solicitar_insumos') }}" class="hover:text-slate-300 transition-colors">Solicitudes</a>
+    <span>/</span>
+    <span class="text-slate-200">Confirmar</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('orders.solicitar_insumos') }}" 
+   class="flex items-center gap-2 px-4 py-2 border border-charcoal-700 bg-charcoal-800 text-slate-200 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors">
+    <span class="material-symbols-outlined text-lg">arrow_back</span>
+    Volver al Catálogo
+</a>
+{% endblock %}
+
 {% block content %}
 
-<div class="page-wrapper">
-    <div class="content-card content-card-large">
-        <h1 class="page-title">Confirmar Solicitud de Insumos</h1>
-        
-        {% if insumos %}
-        <!-- Tabla con scroll -->
-        <div class="table-wrapper">
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>N°</th>
-                            <th>Código</th>
-                            <th>Descripción</th>
-                            <th>Stock</th>
-                            <th>Cantidad a solicitar</th>
-                            <th>Eliminar</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for insumo in insumos %}
-                        <tr data-insumo-id="{{ insumo.id }}">
-                            <td>{{ loop.index }}</td>
-                            <td>{{ insumo.codigo_insumo }}</td>
-                            <td>{{ insumo.descripcion }}</td>
-                            <td>{{ insumo.stock_actual }}</td>
-                            <td>
-                                <!-- ✅ form="confirmar-form" vincula este input al formulario de confirmar -->
-                                <input type="number" 
-                                       form="confirmar-form"
-                                       name="cantidad_{{ insumo.id }}" 
-                                       id="cantidad_{{ insumo.id }}"
-                                       class="quantity-input" 
-                                       value="{{ cantidades[insumo.id|string]|default(1) }}" 
-                                       min="1" 
-                                       max="{{ insumo.stock_actual }}">
-                            </td>
-                            <td>
-                                <form method="POST" 
-                                      action="{{ url_for('orders.eliminar_insumo_lista', insumo_id=insumo.id) }}" 
-                                      class="ajax-delete-form">
-                                    <button type="submit" class="btn btn-danger btn-small">
-                                        Eliminar
-                                    </button>
-                                    <!-- Inputs ocultos para preservar cantidades -->
-                                    {% for otro in insumos %}
-                                        {% if otro.id != insumo.id %}
-                                            <input type="hidden" 
-                                                   name="cantidad_{{ otro.id }}" 
-                                                   id="hidden_cantidad_{{ otro.id }}_{{ insumo.id }}">
-                                        {% endif %}
-                                    {% endfor %}
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <!-- ✅ Formulario de confirmar al final, FUERA de la tabla -->
-        <form method="POST" id="confirmar-form" action="{{ url_for('orders.confirmar_solicitud_insumos') }}">
-            <div class="btn-back-container">
-                <button type="submit" class="btn btn-primary">Confirmar</button>
-                <a href="{{ url_for('orders.solicitar_insumos') }}" class="btn btn-secondary">Volver atrás</a>
-            </div>
-        </form>
-        
-        {% else %}
-        <!-- Mensaje cuando no hay insumos -->
-        <div style="text-align: center; margin: 40px 0;">
-            <div style="font-size: 4rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                ⚠️
-            </div>
-            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 2rem;">
-                No hay insumos en la lista de solicitud.<br>
-                Agrega insumos para poder realizar una solicitud.
+<div class="space-y-8">
+
+    <section>
+        <div class="space-y-1">
+            <h1 class="text-4xl font-light text-white tracking-tight">
+                Confirmar <span class="font-bold text-primary">Solicitud</span>
+            </h1>
+            <p class="text-slate-500 text-sm">
+                Revisa las cantidades y disponibilidad antes de procesar tu pedido institucional
             </p>
-            <a href="{{ url_for('orders.solicitar_insumos') }}" class="btn btn-primary">
-                Agregar insumos
-            </a>
         </div>
-        {% endif %}
+    </section>
+
+    {% if insumos %}
+    <form method="POST" action="{{ url_for('orders.confirmar_solicitud_insumos') }}" id="confirm-order-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         
-        <div class="btn-back-container">
-            <a href="{{ url_for('main.index') }}" class="btn-back">
-                ← Volver al menú
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            
+            <!-- TABLA (66% del ancho) -->
+            <div class="xl:col-span-8">
+                <section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse table-fixed">
+                            <colgroup>
+                                <col class="w-[40%]">
+                                <col class="w-[12%]">
+                                <col class="w-[20%]">
+                                <col class="w-[16%]">
+                                <col class="w-[12%]">
+                            </colgroup>
+                            <thead>
+                                <tr class="border-b border-charcoal-700 bg-charcoal-950/40">
+                                    <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Insumo</th>
+                                    <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Stock</th>
+                                    <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Cantidad</th>
+                                    <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Estado</th>
+                                    <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-charcoal-800/50" id="insumos-tbody">
+                                {% for insumo in insumos %}
+                                {% set cantidad_solicitada = cantidades.get(insumo.id|string, 1) %}
+                                {% set stock_suficiente = cantidad_solicitada <= insumo.stock_actual %}
+                                {% set stock_bajo = insumo.stock_actual < 50 and stock_suficiente %}
+                                
+                                <tr class="hover:bg-white/[0.03] transition-colors {{ 'bg-rose-500/5' if not stock_suficiente else '' }}" 
+                                    data-insumo-id="{{ insumo.id }}"
+                                    data-stock="{{ insumo.stock_actual }}">
+                                    
+                                    <td class="px-4 py-4">
+                                        <div class="flex flex-col gap-1 min-w-0">
+                                            <span class="text-sm font-medium text-white truncate" title="{{ insumo.descripcion }}">{{ insumo.descripcion }}</span>
+                                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-slate-500/10 text-slate-400 w-fit">
+                                                {{ insumo.categoria.nombre_categoria if insumo.categoria else 'Sin categoría' }}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-4 py-4 text-center">
+                                        <span class="text-sm font-mono text-slate-300">{{ insumo.stock_actual }}</span>
+                                    </td>
+
+                                    <td class="px-4 py-4">
+                                        <div class="flex justify-center">
+                                            <div class="flex items-center bg-charcoal-900 border {{ 'border-rose-500 border-2' if not stock_suficiente else 'border-charcoal-700' }} rounded-lg group relative">
+                                                <button type="button" class="btn-decrease px-2 py-1.5 text-slate-500 hover:text-primary transition-colors" data-insumo-id="{{ insumo.id }}">
+                                                    <span class="material-symbols-outlined text-sm">remove</span>
+                                                </button>
+                                                <input type="number" name="cantidad_{{ insumo.id }}" class="w-14 bg-transparent border-none text-center text-sm font-semibold focus:ring-0 text-white cantidad-input" min="1" max="{{ insumo.stock_actual }}" value="{{ cantidad_solicitada }}" required data-insumo-id="{{ insumo.id }}">
+                                                <button type="button" class="btn-increase px-2 py-1.5 text-slate-500 hover:text-primary transition-colors" data-insumo-id="{{ insumo.id }}">
+                                                    <span class="material-symbols-outlined text-sm">add</span>
+                                                </button>
+                                                
+                                                {% if not stock_suficiente %}
+                                                <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-rose-600 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                                    Excede stock
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td class="px-4 py-4">
+                                        <div class="flex justify-center">
+                                            {% if not stock_suficiente %}
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold whitespace-nowrap status-badge">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                    Insuf.
+                                                </span>
+                                            {% elif stock_bajo %}
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-semibold whitespace-nowrap status-badge">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                                    Bajo
+                                                </span>
+                                            {% else %}
+                                                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold whitespace-nowrap status-badge">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    OK
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+
+                                    <td class="px-4 py-4 text-center">
+                                        <button type="button" 
+                                                class="btn-remove-item text-slate-500 hover:text-rose-400 transition-colors" 
+                                                data-insumo-id="{{ insumo.id }}"
+                                                data-csrf="{{ csrf_token() }}">
+                                            <span class="material-symbols-outlined text-lg">delete_outline</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="px-4 py-3 border-t border-charcoal-700 bg-charcoal-950/20 flex items-center justify-between text-xs">
+                        <p class="text-slate-500">
+                            <span class="text-white font-semibold" id="footer-item-count">{{ insumos|length }}</span> ítem{{ 's' if insumos|length != 1 else '' }}
+                        </p>
+                        <a href="{{ url_for('orders.solicitar_insumos') }}" class="flex items-center gap-1 text-primary hover:text-primary/80 transition-colors font-medium">
+                            <span class="material-symbols-outlined text-sm">add_circle</span>
+                            Agregar más
+                        </a>
+                    </div>
+                </section>
+            </div>
+
+            <!-- RESUMEN (33% del ancho) -->
+            <div class="xl:col-span-4">
+                <div class="sticky top-24 h-full">
+                    <aside class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden">
+                        <div class="px-4 py-3 bg-charcoal-950/40 border-b border-charcoal-700">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-lg">assignment</span>
+                                <h2 class="text-sm font-bold text-white">Resumen</h2>
+                            </div>
+                        </div>
+
+                        <div class="px-4 py-4 space-y-4">
+                            <div class="flex justify-between items-center py-2 border-b border-charcoal-700">
+                                <span class="text-slate-400 text-sm">Ítems</span>
+                                <span class="text-xl font-bold text-white" id="total-items">{{ insumos|length }}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center py-2 border-b border-charcoal-700">
+                                <span class="text-slate-400 text-sm">Unidades</span>
+                                <span class="text-xl font-bold text-white" id="total-units">
+                                    {% set total_units = namespace(value=0) %}
+                                    {% for insumo in insumos %}
+                                        {% set cantidad = cantidades.get(insumo.id|string, 1) %}
+                                        {% set total_units.value = total_units.value + cantidad %}
+                                    {% endfor %}
+                                    {{ total_units.value }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="px-4 py-4 space-y-2">
+                            <button type="submit" id="btn-confirm" class="w-full py-2 bg-primary hover:bg-primary/90 text-charcoal-950 font-bold rounded-lg transition-all shadow-lg shadow-primary/10 flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                                <span class="material-symbols-outlined text-base">check_circle</span>
+                                Confirmar
+                            </button>
+                            <a href="{{ url_for('orders.solicitar_insumos') }}" class="w-full py-2 bg-transparent hover:bg-charcoal-700 text-slate-400 font-medium rounded-lg border border-charcoal-700 transition-all flex items-center justify-center gap-2 text-xs">
+                                <span class="material-symbols-outlined text-base">arrow_back</span>
+                                Volver
+                            </a>
+                        </div>
+
+                        <div class="px-4 pb-4">
+                            <div class="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                                <div class="flex gap-2">
+                                    <span class="material-symbols-outlined text-primary text-sm flex-shrink-0 mt-0.5">info</span>
+                                    <p class="text-xs text-slate-300 leading-relaxed">
+                                        La solicitud será enviada a almacén para validación y despacho.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+    {% else %}
+    <section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl p-16">
+        <div class="flex flex-col items-center text-center gap-6">
+            <div class="w-20 h-20 bg-charcoal-800 border border-charcoal-700 rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-4xl text-charcoal-600">shopping_cart</span>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-2xl font-bold text-white">Tu carrito está vacío</h3>
+                <p class="text-slate-500 text-sm">No has seleccionado ningún insumo para solicitar</p>
+            </div>
+            <a href="{{ url_for('orders.solicitar_insumos') }}" class="px-6 py-3 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/10">
+                <span class="material-symbols-outlined text-lg">shopping_cart</span>
+                Ir al Catálogo
             </a>
         </div>
-    </div>
+    </section>
+    {% endif %}
+
 </div>
+
+<div id="toast-container" class="fixed top-24 right-8 z-[100] space-y-3 pointer-events-none"></div>
+
+<!-- ✅ JAVASCRIPT CORREGIDO CON URL_FOR -->
+<script type="module">
+    import { showToast } from '/static/js/utils/toast.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('confirm-order-form');
+        const tbody = document.getElementById('insumos-tbody');
+        const totalItemsEl = document.getElementById('total-items');
+        const totalUnitsEl = document.getElementById('total-units');
+        const footerItemCount = document.getElementById('footer-item-count');
+        const btnConfirm = document.getElementById('btn-confirm');
+        
+        // ✅ GENERAR URL BASE USANDO FLASK
+        const eliminarUrlBase = "{{ url_for('orders.eliminar_insumo_lista', insumo_id=0) }}".replace('/0', '');
+        const catalogoUrl = "{{ url_for('orders.solicitar_insumos') }}";
+        
+        function updateTotals() {
+            const rows = tbody.querySelectorAll('tr');
+            let totalItems = rows.length;
+            let totalUnits = 0;
+            let hasErrors = false;
+            
+            rows.forEach(row => {
+                const input = row.querySelector('.cantidad-input');
+                const stock = parseInt(row.dataset.stock);
+                const cantidad = parseInt(input.value) || 0;
+                const statusBadge = row.querySelector('.status-badge');
+                const inputContainer = input.closest('.flex');
+
+                totalUnits += cantidad;
+                
+                if (cantidad > stock) {
+                    hasErrors = true;
+                    row.classList.add('bg-rose-500/5');
+                    inputContainer.classList.add('border-rose-500', 'border-2');
+                    inputContainer.classList.remove('border-charcoal-700');
+                    
+                    statusBadge.innerHTML = `
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                        Insuf.
+                    `;
+                    statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-semibold whitespace-nowrap status-badge';
+                } else {
+                    row.classList.remove('bg-rose-500/5');
+                    inputContainer.classList.remove('border-rose-500', 'border-2');
+                    inputContainer.classList.add('border-charcoal-700');
+                    
+                    if (stock < 50) {
+                        statusBadge.innerHTML = `
+                            <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                            Bajo
+                        `;
+                        statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-semibold whitespace-nowrap status-badge';
+                    } else {
+                        statusBadge.innerHTML = `
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                            OK
+                        `;
+                        statusBadge.className = 'inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold whitespace-nowrap status-badge';
+                    }
+                }
+            });
+            
+            totalItemsEl.textContent = totalItems;
+            totalUnitsEl.textContent = totalUnits;
+            if (footerItemCount) footerItemCount.textContent = totalItems;
+            
+            if (hasErrors) {
+                btnConfirm.disabled = true;
+                btnConfirm.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                btnConfirm.disabled = false;
+                btnConfirm.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-increase');
+            if (!btn) return;
+            
+            const row = btn.closest('tr');
+            const input = row.querySelector('.cantidad-input');
+            const max = parseInt(input.max);
+            const current = parseInt(input.value) || 0;
+            
+            if (current < max) {
+                input.value = current + 1;
+                updateTotals();
+            } else {
+                showToast('No puedes solicitar más del stock disponible', 'warning');
+            }
+        });
+        
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-decrease');
+            if (!btn) return;
+            
+            const row = btn.closest('tr');
+            const input = row.querySelector('.cantidad-input');
+            const min = parseInt(input.min) || 1;
+            const current = parseInt(input.value) || 0;
+            
+            if (current > min) {
+                input.value = current - 1;
+                updateTotals();
+            }
+        });
+        
+        tbody.addEventListener('input', (e) => {
+            if (!e.target.classList.contains('cantidad-input')) return;
+            updateTotals();
+        });
+        
+        // ✅ ELIMINAR CON URL CORRECTA
+        tbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-remove-item');
+            if (!btn) return;
+            
+            if (!confirm('¿Quitar este insumo de la solicitud?')) return;
+            
+            const insumoId = btn.dataset.insumoId;
+            const csrfToken = btn.dataset.csrf;
+            
+            const formData = new FormData();
+            formData.append('csrf_token', csrfToken);
+            
+            document.querySelectorAll('.cantidad-input').forEach(input => {
+                const id = input.dataset.insumoId;
+                formData.append(`cantidad_${id}`, input.value);
+            });
+            
+            // ✅ USAR LA URL GENERADA POR FLASK
+            fetch(`${eliminarUrlBase}/${insumoId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, data.category);
+                    
+                    if (data.is_empty) {
+                        setTimeout(() => {
+                            window.location.href = catalogoUrl;
+                        }, 1000);
+                    } else {
+                        const row = document.querySelector(`tr[data-insumo-id="${insumoId}"]`);
+                        if (row) {
+                            row.remove();
+                            updateTotals();
+                        }
+                    }
+                } else {
+                    showToast(data.message, data.category);
+                }
+            })
+            .catch(error => {
+                console.error('Error completo:', error);
+                showToast(`Error al eliminar: ${error.message}`, 'danger');
+            });
+        });
+        
+        if (tbody) updateTotals();
+    });
+</script>
 
 {% endblock %}

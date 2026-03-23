@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime, timezone
-from sqlalchemy import or_
+from sqlalchemy import or_, cast, String, CheckConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db, login, jwt
 
@@ -67,22 +67,6 @@ class EntradaInsumo(db.Model):
     cantidad = db.Column(db.Integer, nullable=False)
     id_insumo = db.Column(db.Integer, db.ForeignKey('insumos.id'), nullable=False)
     id_proveedor = db.Column(db.Integer, db.ForeignKey('proveedores.id_proveedor'), nullable=False)
-
-    @classmethod
-    def filtro_entradas_insumos(cls, filtro: str):
-        """Método de clase para filtrar entradas de insumos por proveedor, codigo o descripción"""
-        query = cls.query.join(Proveedor).join(Insumo)
-        if filtro:
-            search_str = f"%{filtro}%"
-            query = query.filter(
-                or_(
-                    Proveedor.nombre.ilike(search_str),
-                    Insumo.codigo_insumo.ilike(search_str),
-                    Insumo.descripcion.ilike(search_str)
-                )
-            )
-        return query.order_by(cls.fecha_entrada.desc())
-
 
 class User(UserMixin, db.Model):
     __tablename__ = 'usuarios'
@@ -184,6 +168,7 @@ class SalidaInsumo(db.Model):
             search_str = f"%{filtro}%"
             query = query.filter(
                 or_(
+                    cast(cls.fecha_salida, String).ilike(search_str), #Permitir búsqueda por fecha (formato YYYY-MM-DD)
                     User.nombre.ilike(search_str),
                     Dependencia.nombre_dependencia.ilike(search_str),
                     Insumo.codigo_insumo.ilike(search_str),

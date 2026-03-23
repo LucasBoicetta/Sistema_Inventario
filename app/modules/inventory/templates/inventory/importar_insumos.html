@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Importar Insumos{% endblock %}
+
+{% block header_search %}
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <a href="{{ url_for('inventory.cargar_insumos') }}" class="hover:text-slate-300">Cargar Insumos</a>
+    <span>/</span>
+    <span class="text-slate-200">Importar CSV/Excel</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('inventory.descargar_plantilla_csv') }}" 
+   class="flex items-center gap-2 px-4 py-2 border border-primary/30 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors">
+    <span class="material-symbols-outlined text-lg">download</span>
+    Descargar Plantilla
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================ -->
+<!-- TÍTULO DE PÁGINA                             -->
+<!-- ============================================ -->
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Importar <span class="font-bold text-primary">Insumos</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Carga masiva desde archivos CSV o Excel
+        </p>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FORMULARIO DE IMPORTACIÓN                    -->
+<!-- ============================================ -->
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl p-8">
+    <form method="POST" enctype="multipart/form-data" id="form-importar">
+        {{ form.hidden_tag() }}
+        
+        <!-- Drop zone -->
+        <div class="mb-8">
+            <label class="block text-sm font-bold text-slate-300 mb-3">
+                Seleccione el archivo a importar
+            </label>
+            
+            <div class="border-2 border-dashed border-charcoal-600 rounded-xl p-12 text-center hover:border-primary/40 transition-colors cursor-pointer"
+                 id="drop-zone"
+                 ondrop="handleDrop(event)" 
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)">
+                <span class="material-symbols-outlined text-6xl text-charcoal-600 mb-4">upload_file</span>
+                <p class="text-slate-400 text-sm mb-2">
+                    Arrastre el archivo aquí o 
+                    <label for="{{ form.archivo.id }}" class="text-primary font-bold cursor-pointer hover:underline">
+                        haga clic para seleccionar
+                    </label>
+                </p>
+                <p class="text-slate-600 text-xs">Formatos: CSV, Excel (.xlsx, .xls) | Tamaño máx: 5MB</p>
+                
+                {{ form.archivo(class="hidden", id=form.archivo.id, onchange="mostrarNombreArchivo(this)") }}
+            </div>
+            
+            <!-- Nombre del archivo seleccionado -->
+            <div id="archivo-seleccionado" class="hidden mt-4 flex items-center gap-3 px-4 py-3 bg-charcoal-800 border border-charcoal-700 rounded-lg">
+                <span class="material-symbols-outlined text-primary text-xl">description</span>
+                <span id="nombre-archivo" class="text-sm text-white font-medium flex-1"></span>
+                <button type="button" 
+                        onclick="limpiarArchivo()"
+                        class="size-6 rounded-full bg-rose-600/10 hover:bg-rose-600 text-rose-400 hover:text-white transition-all flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="flex items-center justify-between pt-6 border-t border-charcoal-700">
+            <a href="{{ url_for('inventory.cargar_insumos') }}" 
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-charcoal-800 hover:bg-charcoal-700 text-slate-400 hover:text-white border border-charcoal-700 rounded-lg text-xs font-bold uppercase tracking-wider transition-all">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>
+                Volver
+            </a>
+            
+            {{ form.submit(class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-primary/20", disabled=true, id="btn-importar") }}
+        </div>
+    </form>
+</section>
+
+<!-- ============================================ -->
+<!-- FORMATO ESPERADO DEL ARCHIVO                 -->
+<!-- ============================================ -->
+<section class="bg-charcoal-900/50 border border-charcoal-700/50 rounded-xl p-6">
+    <div class="flex gap-4">
+        <span class="material-symbols-outlined text-primary text-2xl">info</span>
+        <div class="space-y-3">
+            <h3 class="text-sm font-bold text-white">Formato del archivo</h3>
+            
+            <div class="text-xs text-slate-400 space-y-2">
+                <p><strong class="text-white">Columnas obligatorias:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                    <li><code class="text-primary">codigo</code> - Código único del insumo (3-10 caracteres alfanuméricos)</li>
+                    <li><code class="text-primary">cantidad</code> - Cantidad a ingresar (número entero positivo)</li>
+                    <li><code class="text-primary">proveedor</code> - Nombre del proveedor</li>
+                </ul>
+                
+                <p class="pt-2"><strong class="text-white">Columnas opcionales:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                    <li><code class="text-primary">descripcion</code> o <code class="text-primary">nombre</code> - Solo necesario para códigos nuevos</li>
+                </ul>
+            </div>
+            
+            <div class="mt-4 p-4 bg-charcoal-950 rounded-lg">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ejemplo:</p>
+                <pre class="text-xs text-slate-300 font-mono overflow-x-auto">codigo,descripcion,cantidad,proveedor
+INS001,Resma de Papel A4,10,Librería Central S.A.
+INS002,Lápices HB (Caja x12),5,Papelería Express</pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- JAVASCRIPT                                   -->
+<!-- ============================================ -->
+<script>
+const dropZone = document.getElementById('drop-zone');
+const archivoInput = document.getElementById('{{ form.archivo.id }}');
+const btnImportar = document.getElementById('btn-importar');
+
+function handleDragOver(e) {
+    e.preventDefault();
+    dropZone.classList.add('border-primary', 'bg-primary/5');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    dropZone.classList.remove('border-primary', 'bg-primary/5');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    dropZone.classList.remove('border-primary', 'bg-primary/5');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        archivoInput.files = files;
+        mostrarNombreArchivo(archivoInput);
+    }
+}
+
+function mostrarNombreArchivo(input) {
+    const archivoSeleccionado = document.getElementById('archivo-seleccionado');
+    const nombreArchivo = document.getElementById('nombre-archivo');
+    
+    if (input.files.length > 0) {
+        const file = input.files[0];
+        nombreArchivo.textContent = file.name + ' (' + formatBytes(file.size) + ')';
+        archivoSeleccionado.classList.remove('hidden');
+        btnImportar.disabled = false;
+        btnImportar.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+function limpiarArchivo() {
+    archivoInput.value = '';
+    document.getElementById('archivo-seleccionado').classList.add('hidden');
+    btnImportar.disabled = true;
+    btnImportar.classList.add('opacity-50', 'cursor-not-allowed');
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+</script>
+
+{% endblock %}

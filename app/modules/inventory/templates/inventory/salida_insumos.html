@@ -1,76 +1,276 @@
 {% extends "base.html" %}
-{% block title %}Salidas de Insumos{% endblock %}
+{% block title %}Salidas de Stock{% endblock %}
+
+{% block header_search %}
+<!-- Breadcrumb -->
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <span class="text-slate-200">Salidas de Stock</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('inventory.exportar_salidas') }}" 
+   class="flex items-center gap-2 px-4 py-2 border border-charcoal-700 bg-charcoal-800 text-slate-200 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors">
+    <span class="material-symbols-outlined text-lg">download</span>
+    Exportar CSV
+</a>
+
+{# TODO: pendiente de backend - ruta para nueva salida #}
+{# {% if current_user.is_authenticated and current_user.rol.nombre_rol == 'admin' %}
+<a href="{{ url_for('inventory.nueva_salida') }}" 
+   class="px-5 py-2.5 bg-primary text-charcoal-950 rounded font-semibold text-sm flex items-center gap-2 shadow-xl shadow-primary/10 hover:brightness-110 active:scale-95 transition-all">
+    <span class="material-symbols-outlined text-lg">add</span>
+    Nueva Salida
+</a>
+{% endif %} #}
+{% endblock %}
+
 {% block content %}
 
-<div class="page-wrapper">
-    <div class="content-card content-card-large">
-        <h1 class="page-title">Salidas de Insumos</h1>
+<!-- ============================================ -->
+<!-- TÍTULO DE PÁGINA                             -->
+<!-- ============================================ -->
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Salidas de <span class="font-bold text-primary">Stock</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Registro de egresos y distribución de inventario
+        </p>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- BARRA DE FILTROS                             -->
+<!-- ============================================ -->
+<section>
+    <form method="GET" action="{{ url_for('inventory.salida_insumos') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         
-        <!-- Barra de búsqueda -->
-        <form method="GET" class="search-bar">
-            <input type="text" 
-                   name="filtro" 
-                   class="search-input" 
-                   placeholder="Buscar por fecha, insumo, solicitante o dependencia..." 
-                   value="{{ request.args.get('filtro', '') }}">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-        </form>
-        
-        <!-- Tabla con scroll -->
-        <div class="table-wrapper">
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Código</th>
-                            <th>Insumo</th>
-                            <th>Solicitante</th>
-                            <th>Dependencia</th>
-                            <th>Cantidad Solicitada</th>
-                            <th>Cantidad Entregada</th>
-                            <th>Observaciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for salida in salidas %}
-                        <tr>
-                            <td>{{ salida.fecha_salida.strftime('%d/%m/%Y') }}</td>
-                            <td>{{ salida.insumo.codigo_insumo }}</td>
-                            <td>{{ salida.insumo.descripcion }}</td>
-                            <td>{{ salida.solicitud_detalle.solicitud.usuario.nombre }}</td>
-                            <td>{{ salida.solicitud_detalle.solicitud.usuario.dependencia.nombre_dependencia }}</td>
-                            <td>{{ salida.solicitud_detalle.cantidad_solicitada }}</td>
-                            <td>{{ salida.cantidad_entregada }}</td>
-                            <td>{{ salida.observaciones or '-' }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- Búsqueda general -->
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Buscar</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">search</span>
+                <input type="text" 
+                       name="filtro" 
+                       value="{{ filtros.filtro }}"
+                       placeholder="Código, usuario, dependencia..."
+                       autocomplete="off"
+                       class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
             </div>
         </div>
-        <div class="pagination-controls">
-            {% if pagination.has_prev %}
-                <a href="{{ url_for('inventory.salida_insumos', page=pagination.prev_num,filtro=filtro )}}" class="btn btn-secondary">Anterior</a>
-            {% endif%}
-
-            <span>Página {{ pagination.page}} de {{pagination.pages}}</span>
-
-            {% if pagination.has_next %}
-                <a href="{{ url_for('inventory.salida_insumos', page=pagination.next_num,filtro=filtro )}}" class="btn btn-secondary">Siguiente</a>
-            {% endif %}
+        
+        <!-- Fecha desde -->
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Desde</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">calendar_today</span>
+                <input type="date" 
+                       name="fecha_desde" 
+                       value="{{ filtros.fecha_desde }}"
+                       autocomplete="off"
+                       class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
+            </div>
         </div>
-        <div class="btn-back-container">
-            <a href="{{ url_for('main.index') }}" class="btn-back">
-                ← Volver al menú
+        
+        <!-- Fecha hasta -->
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hasta</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">event</span>
+                <input type="date" 
+                       name="fecha_hasta" 
+                       value="{{ filtros.fecha_hasta }}"
+                       autocomplete="off"
+                       class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
+            </div>
+        </div>
+        
+        <!-- Dependencia -->
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Dependencia</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">corporate_fare</span>
+                <select name="entidad_id" 
+                        class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none appearance-none">
+                    <option value="">Todas</option>
+                    {% for dependencia in dependencias %}
+                    <option value="{{ dependencia.id_dependencia }}" 
+                            {% if filtros.entidad_id == dependencia.id_dependencia|string %}selected{% endif %}>
+                        {{ dependencia.nombre_dependencia }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-lg">expand_more</span>
+            </div>
+        </div>
+        
+        <!-- Botones (nueva fila completa) -->
+        <div class="md:col-span-4 flex gap-3">
+            <!-- Botón Aplicar Filtros (estilo primario amarillo) -->
+            <button type="submit" 
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-sm">filter_alt</span>
+                Filtrar
+            </button>
+            
+            <!-- Botón Limpiar (estilo secundario rojo) -->
+            <a href="{{ url_for('inventory.salida_insumos') }}" 
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-charcoal-800 hover:bg-rose-600 text-slate-400 hover:text-white border border-charcoal-700 hover:border-rose-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-all">
+                <span class="material-symbols-outlined text-sm">refresh</span>
+                Limpiar
             </a>
         </div>
-    </div>
-</div>
+    </form>
+</section>
 
-<!-- Botón flotante de exportar -->
-<a href="{{ url_for('inventory.exportar_salidas') }}" class="btn-export-fixed">
-    📊 Exportar a CSV
-</a>
+<!-- ============================================ -->
+<!-- TABLA DE SALIDAS                             -->
+<!-- ============================================ -->
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-950/40">
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Fecha</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Insumo</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Destino</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Solicitada</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Entregada</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Solicitante</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Observaciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-charcoal-800/50">
+                {% for salida in salidas %}
+                <tr class="transition-colors hover:bg-white/[0.03] cursor-default">
+                    <!-- Fecha -->
+                    <td class="px-6 py-5 text-sm text-slate-400">
+                        {{ salida.fecha_salida.strftime('%d/%m/%Y') }}
+                    </td>
+                    
+                    <!-- Insumo (código + descripción) -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-3">
+                            <div class="size-7 rounded bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                                <span class="material-symbols-outlined text-primary text-base">inventory_2</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-white truncate">{{ salida.insumo.descripcion }}</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-mono font-semibold tracking-wider">{{ salida.insumo.codigo_insumo }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <!-- Destino (dependencia) -->
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-500 text-sm">corporate_fare</span>
+                            <span class="text-sm text-slate-300">
+                                {{ salida.solicitud_detalle.solicitud.usuario.dependencia.nombre_dependencia }}
+                            </span>
+                        </div>
+                    </td>
+                    
+                    <!-- Cantidad Solicitada -->
+                    <td class="px-6 py-5 text-center">
+                        <span class="text-sm font-semibold text-white">
+                            {{ salida.solicitud_detalle.cantidad_solicitada }}
+                        </span>
+                    </td>
+                    
+                    <!-- Cantidad Entregada -->
+                    <td class="px-6 py-5 text-center">
+                        <span class="text-sm font-semibold text-rose-400">
+                            -{{ salida.cantidad_entregada }}
+                        </span>
+                    </td>
+                    
+                    <!-- Solicitante -->
+                    <td class="px-6 py-5">
+                        <span class="text-sm text-slate-300">
+                            {{ salida.solicitud_detalle.solicitud.usuario.nombre }}
+                        </span>
+                    </td>
+                    
+                    <!-- Observaciones -->
+                    <td class="px-6 py-5">
+                        <span class="text-xs text-slate-400">
+                            {{ salida.observaciones or '-' }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="px-6 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <span class="material-symbols-outlined text-4xl text-charcoal-600">logout</span>
+                            <p class="text-slate-500 text-sm">No se encontraron salidas</p>
+                            {% if request.args.get('filtro') %}
+                                <a href="{{ url_for('inventory.salida_insumos') }}" 
+                                   class="text-primary text-xs hover:underline">Limpiar filtros</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- PAGINACIÓN                                   -->
+    <!-- ============================================ -->
+    <div class="px-6 py-5 border-t border-charcoal-700 bg-charcoal-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-xs text-slate-500 font-medium">
+            Mostrando página {{ pagination.page }} de {{ pagination.pages }} 
+            ({{ pagination.total }} registros)
+        </p>
+        
+        <div class="flex items-center gap-2">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('inventory.salida_insumos', page=pagination.prev_num, **filtros) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </button>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <span class="flex items-center justify-center size-9 rounded-lg bg-primary text-charcoal-950 font-bold text-xs shadow-lg shadow-primary/10">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="{{ url_for('inventory.salida_insumos', page=page_num, **filtros) }}" 
+                           class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 text-slate-400 hover:border-slate-500 hover:text-white transition-all text-xs font-bold">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="text-slate-600 px-1">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <a href="{{ url_for('inventory.salida_insumos', page=pagination.next_num, **filtros) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</section>
 
 {% endblock %}

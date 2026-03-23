@@ -1,91 +1,311 @@
 {% extends "base.html" %}
 {% block title %}Gestionar Entregas{% endblock %}
+
+{% block header_search %}
+<!-- Breadcrumb -->
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <span class="text-slate-200">Solicitudes Pendientes</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<!-- Contador simple de solicitudes pendientes -->
+{% if solicitudes %}
+<div class="flex items-center gap-2 px-4 py-2 border border-primary/30 bg-primary/10 rounded-lg">
+    <span class="material-symbols-outlined text-primary text-lg">pending_actions</span>
+    <span class="text-primary font-bold text-sm">
+        {{ pagination.total }} pendiente{{ 's' if pagination.total != 1 else '' }}
+    </span>
+</div>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 
-<div class="page-wrapper">
-    <div class="content-card content-card-large">
-        <h1 class="page-title">Solicitudes Pendientes de Entrega</h1>
-        
-        <!-- Barra de búsqueda -->
-        <form method="GET" class="search-bar">
-            <input type="text" name="filtro" class="search-input" 
-                   placeholder="Buscar solicitud por N°..." 
-                   value="{{ filtro }}">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-        </form>
-        
-        {% if solicitudes %}
-        <div class="table-wrapper">
-            <div class="table-scroll">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>N°</th>
-                            <th>Fecha</th>
-                            <th>Solicitante</th>
-                            <th>Insumo</th>
-                            <th>Cantidad</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for solicitud in solicitudes %}
-                            <!-- Iteramos los detalles aquí, igual que antes -->
-                            {% for detalle in solicitud.detalles %}
-                                {% if not detalle.salidas %}
-                                <tr>
-                                    <td>{{ solicitud.id_solicitud }}</td>
-                                    <td>{{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}</td>
-                                    <td>
-                                        <strong>{{ solicitud.usuario.nombre }}</strong><br>
-                                        <small>{{ solicitud.usuario.dependencia.nombre_dependencia }}</small>
-                                    </td>
-                                    <td>{{ detalle.insumo.descripcion }}</td>
-                                    <td>{{ detalle.cantidad_solicitada }}</td>
-                                    <td>
-                                        <form method="POST" 
-                                              action="{{ url_for('orders.entregar_solicitud', detalle_id=detalle.id_solicitudes_insumos) }}" 
-                                              style="display: flex; gap: 0.5rem; align-items: center;">
-                                            {{ form.hidden_tag() }}
-                                            
-                                            <!-- Inputs compactos -->
-                                            {{ form.cantidad_entregada(class="quantity-input", style="width: 70px;", max=detalle.cantidad_solicitada, value=detalle.cantidad_solicitada) }}
-                                            {{ form.observaciones(class="observation-input", style="width: 150px;", placeholder="Observación...") }}
-                                            
-                                            <button type="submit" class="btn btn-success btn-small">
-                                                ✔ Entregar
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endif %}
-                            {% endfor %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+<!-- ============================================ -->
+<!-- TÍTULO DE PÁGINA                             -->
+<!-- ============================================ -->
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Solicitudes <span class="font-bold text-primary">Pendientes de Entrega</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Gestión de entregas de insumos solicitados por las diferentes dependencias
+        </p>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- BARRA DE BÚSQUEDA                            -->
+<!-- ============================================ -->
+<section>
+    <form method="GET" action="{{ url_for('orders.solicitudes_pendientes') }}" 
+          class="bg-charcoal-900/50 border border-charcoal-700/50 rounded-xl p-6">
+        <div class="flex gap-4 items-end">
+            <!-- Búsqueda por N° de solicitud -->
+            <div class="flex-1 space-y-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Buscar Solicitud
+                </label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">
+                        search
+                    </span>
+                    <input 
+                        type="text" 
+                        name="filtro" 
+                        value="{{ filtro }}"
+                        class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none" 
+                        placeholder="Buscar por N° de solicitud..."
+                        autocomplete="off"/>
+                </div>
             </div>
-        </div>
 
-        <!-- Paginación Estándar -->
-        <div class="pagination-container" style="margin-top: 20px; text-align: center;">
+            <!-- Botón de búsqueda -->
+            <button type="submit" 
+                    class="px-6 py-2.5 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg text-sm font-bold transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">filter_list</span>
+                Filtrar
+            </button>
+        </div>
+    </form>
+</section>
+
+<!-- ============================================ -->
+<!-- TABLA DE SOLICITUDES PENDIENTES              -->
+<!-- ============================================ -->
+{% if solicitudes %}
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-950/40">
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">N°</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Fecha</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Solicitante</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Insumo</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Cantidad</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Acción</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-charcoal-800/50">
+                {% for solicitud in solicitudes %}
+                    {% for detalle in solicitud.detalles %}
+                        {% if not detalle.salidas %}
+                        <tr class="transition-colors hover:bg-white/[0.03] group">
+                            <!-- N° de Solicitud -->
+                            <td class="px-6 py-5">
+                                <span class="inline-flex items-center gap-2 px-2.5 py-1 bg-charcoal-800 border border-charcoal-700 rounded text-xs font-mono text-slate-400">
+                                    #{{ solicitud.id_solicitud }}
+                                </span>
+                            </td>
+
+                            <!-- Fecha -->
+                            <td class="px-6 py-5">
+                                <span class="text-sm font-medium text-white">
+                                    {{ solicitud.fecha_solicitud.strftime('%d/%m/%Y') }}
+                                </span>
+                            </td>
+
+                            <!-- Solicitante -->
+                            <td class="px-6 py-5">
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-semibold text-white">
+                                        {{ solicitud.usuario.nombre }}
+                                    </span>
+                                    <span class="text-[10px] text-slate-500 uppercase tracking-wider">
+                                        {{ solicitud.usuario.dependencia.nombre_dependencia }}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Insumo -->
+                            <td class="px-6 py-5">
+                                <div class="flex items-center gap-2">
+                                    <!-- Indicador de stock disponible -->
+                                    <div class="w-1.5 h-1.5 rounded-full 
+                                        {% if detalle.insumo.stock_actual >= detalle.cantidad_solicitada %}
+                                            bg-emerald-500
+                                        {% elif detalle.insumo.stock_actual > 0 %}
+                                            bg-amber-500
+                                        {% else %}
+                                            bg-rose-500
+                                        {% endif %}">
+                                    </div>
+                                    <span class="text-sm font-medium text-white">
+                                        {{ detalle.insumo.descripcion }}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <!-- Cantidad Solicitada -->
+                            <td class="px-6 py-5 text-center">
+                                <span class="text-sm font-bold text-white">
+                                    {{ detalle.cantidad_solicitada }}
+                                </span>
+                            </td>
+
+                            <!-- Acción: Formulario de entrega -->
+                            <td class="px-6 py-5">
+                                <form method="POST" 
+                                      action="{{ url_for('orders.entregar_solicitud', detalle_id=detalle.id_solicitudes_insumos) }}" 
+                                      class="delivery-form flex items-center gap-2">
+                                    {{ form.hidden_tag() }}
+
+                                    <!-- Agregar campos ocultos para mantener estado -->
+                                     <input type="hidden" name="page" value="{{ pagination.page }}">
+                                     <input type="hidden" name="filtro" value="{{ filtro }}">
+                                    
+                                    <!-- Input de cantidad -->
+                                    <div class="relative w-20">
+                                        {{ form.cantidad_entregada(
+                                            class="w-full bg-charcoal-950 border-2 border-primary/40 rounded text-center text-sm font-bold text-primary py-2 focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all outline-none",
+                                            max=detalle.cantidad_solicitada,
+                                            value=detalle.cantidad_solicitada,
+                                            **{'data-max': detalle.cantidad_solicitada}
+                                        ) }}
+                                    </div>
+
+                                    <!-- Input de observaciones -->
+                                    {{ form.observaciones(
+                                        class="w-40 bg-charcoal-800 border border-charcoal-700 rounded px-3 py-2 text-xs text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none",
+                                        placeholder="Observación..."
+                                    ) }}
+
+                                    <!-- ✅ BOTÓN RESTAURADO AL DISEÑO ORIGINAL -->
+                                    <button type="submit" 
+                                            class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-primary/20 whitespace-nowrap">
+                                        <span class="material-symbols-outlined text-sm">local_shipping</span>
+                                        Entregar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PAGINACIÓN CORREGIDA                         -->
+    <!-- ============================================ -->
+    <div class="px-6 py-5 border-t border-charcoal-700 bg-charcoal-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-xs text-slate-500 font-medium">
+            Mostrando página {{ pagination.page }} de {{ pagination.pages }} 
+            <span class="text-white font-semibold">({{ pagination.total }} solicitud{{ 'es' if pagination.total != 1 else '' }})</span>
+        </p>
+        
+        <div class="flex items-center gap-2">
+            <!-- Botón Anterior -->
             {% if pagination.has_prev %}
-                <a href="{{ url_for('orders.solicitudes_pendientes', page=pagination.prev_num, filtro=filtro) }}" class="btn btn-secondary">Anterior</a>
+                <a href="{{ url_for('orders.solicitudes_pendientes', page=pagination.prev_num, filtro=request.args.get('filtro', '')) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </button>
             {% endif %}
-            <span style="margin: 0 10px;">Página {{ pagination.page }} de {{ pagination.pages }}</span>
+            
+            <!-- Números de página -->
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <span class="flex items-center justify-center size-9 rounded-lg bg-primary text-charcoal-950 font-bold text-xs shadow-lg shadow-primary/10">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="{{ url_for('orders.solicitudes_pendientes', page=page_num, filtro=request.args.get('filtro', '')) }}" 
+                           class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 text-slate-400 hover:border-slate-500 hover:text-white transition-all text-xs font-bold">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="text-slate-600 px-1">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            <!-- Botón Siguiente -->
             {% if pagination.has_next %}
-                <a href="{{ url_for('orders.solicitudes_pendientes', page=pagination.next_num, filtro=filtro) }}" class="btn btn-secondary">Siguiente</a>
+                <a href="{{ url_for('orders.solicitudes_pendientes', page=pagination.next_num, filtro=request.args.get('filtro', '')) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </button>
             {% endif %}
-        </div>
-
-        {% else %}
-        <div class="empty-state">
-            <p>✅ No hay solicitudes pendientes de entrega.</p>
-        </div>
-        {% endif %}
-
-        <div class="btn-back-container">
-            <a href="{{ url_for('main.index') }}" class="btn-back">← Volver al menú</a>
         </div>
     </div>
-</div>
+</section>
+
+{% else %}
+<!-- ============================================ -->
+<!-- ESTADO VACÍO                                 -->
+<!-- ============================================ -->
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl p-16">
+    <div class="flex flex-col items-center text-center gap-6">
+        <div class="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center">
+            <span class="material-symbols-outlined text-4xl text-emerald-400">check_circle</span>
+        </div>
+        <div class="space-y-2">
+            <h3 class="text-2xl font-bold text-white">¡Todo en orden!</h3>
+            <p class="text-slate-500 text-sm">No hay solicitudes pendientes de entrega</p>
+        </div>
+        <a href="{{ url_for('main.index') }}" 
+           class="px-6 py-3 bg-charcoal-700 hover:bg-charcoal-600 text-slate-200 rounded-lg font-bold text-sm flex items-center gap-2 transition-all border border-charcoal-600">
+            <span class="material-symbols-outlined text-lg">arrow_back</span>
+            Volver al menú
+        </a>
+    </div>
+</section>
+{% endif %}
+
+<!-- ============================================ -->
+<!-- JAVASCRIPT: Validación de cantidades         -->
+<!-- ============================================ -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validar que la cantidad entregada no supere la solicitada
+    const forms = document.querySelectorAll('.delivery-form');
+    
+    forms.forEach(form => {
+        const cantidadInput = form.querySelector('input[name="cantidad_entregada"]');
+        if (!cantidadInput) return;
+        
+        const maxCantidad = parseInt(cantidadInput.dataset.max);
+        
+        cantidadInput.addEventListener('input', function() {
+            const valor = parseInt(this.value);
+            
+            if (valor > maxCantidad) {
+                this.value = maxCantidad;
+            }
+            
+            if (valor < 1) {
+                this.value = 1;
+            }
+        });
+        
+        // Validación antes de enviar
+        form.addEventListener('submit', function(e) {
+            const valor = parseInt(cantidadInput.value);
+            
+            if (!valor || valor < 1 || valor > maxCantidad) {
+                e.preventDefault();
+                alert(`Por favor ingresa una cantidad válida (1-${maxCantidad})`);
+                cantidadInput.focus();
+            }
+        });
+    });
+});
+</script>
+
 {% endblock %}

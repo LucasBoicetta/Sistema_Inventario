@@ -31,5 +31,12 @@ class Config:
     JWT_COOKIE_CSRF_PROTECT = False # Protección contra ataques CSRF.
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30) # Expiración del token de acceso.
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)    # Expiración del token de refresco.
-
     JWT_CSRF_CHECK_FORM = True  # Verificar CSRF en formularios Ajax y Html.
+
+    # === Session de flask ===
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=30) #Duración de la sesión (coincide con JWT).
+    SESSION_COOKIE_HTTPSONLY = True #Protege contra XSS (JavaScript no puede acceder a la cookie).
+    SESSION_COOKIE_SAMESITE = 'Lax' #Protege contra CSRF (evita envío cross-site).
+    SESSION_COOKIE_SECURE = False #Cambiar a True en producción con HTTPS.
+    SESSION_COOKIE_NAME = 'session' #Nombre de la cookie de sesión (puedes personalizarlo).
+    

@@ -1,120 +1,242 @@
 {% extends "base.html" %}
-{% block title %}Menú de Opciones{% endblock %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block header_actions %}
+{% if current_user.is_authenticated and current_user.rol.nombre_rol == 'admin' %}
+<a href="{{ url_for('inventory.cargar_insumos') }}" 
+   class="px-5 py-2.5 bg-primary text-charcoal-950 rounded font-semibold text-sm flex items-center gap-2 shadow-xl shadow-primary/10 hover:brightness-110 active:scale-95 transition-all">
+    <span class="material-symbols-outlined text-lg">add</span>
+    Nuevo Insumo
+</a>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 
-<!-- Header con información de usuario -->
-<header class="modern-header">
-    <div class="header-logo">
-            <img src="{{ url_for('static', filename='logoSindicaturaNew-removebg-preview.png') }}" alt="SGQ Logo" class="logo-image">
+<!-- ============================================ -->
+<!-- TÍTULO DE PÁGINA                             -->
+<!-- ============================================ -->
+<section>
+    <div class="flex flex-col gap-1">
+        <h1 class="text-3xl font-light text-white tracking-tight">
+            Panel de <span class="font-bold">Control</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Integridad del sistema: <span class="text-emerald-500">Nominal</span> 
+            • Bienvenido, <span class="text-white font-medium">{{ current_user.nombre }}</span>
+        </p>
     </div>
-    <div class="user-actions">
-        <div class="user-info">
-            <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-            </svg>
-            <span>{{ current_user.nombre }}</span>
-        </div>
-        <a href="{{ url_for('auth.cambiar_contraseña') }}" class="header-link">
-            <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-            </svg>
-            <span class="link-text">Cambiar contraseña</span>
-        </a>
-        <a href="{{ url_for('auth.logout') }}" class="header-link">
-            <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-            <span class="link-text">Cerrar sesión</span>
-        </a>
-    </div>
-</header>
+</section>
 
-<!-- Contenedor principal -->
-<div class="modern-container">
-    <!-- Sección izquierda: Título y logo -->
-    <div class="title-section">
-        <div class="logo-wrapper">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="SGQ Logo" class="modern-logo">
+<!-- ============================================ -->
+<!-- STAT CARDS                                   -->
+<!-- ============================================ -->
+{% if current_user.is_authenticated and current_user.rol.nombre_rol == 'admin' %}
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    
+    <div class="surface-gradient p-6 rounded-xl border border-charcoal-700/50 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Stock Bajo</span>
+            <span class="material-symbols-outlined text-rose-500">warning</span>
         </div>
-        <h1 class="main-title">SINDICATURA GENERAL<br>DE QUIEBRAS</h1>
-        <div class="divider"></div>
-        <p class="subtitle">Menú de Opciones</p>
+        <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-semibold text-white">--</p>
+            <span class="text-xs text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded leading-none">Crítico</span>
+        </div>
     </div>
 
-    <!-- Sección derecha: Menú de opciones -->
-    <nav class="menu-section">
-        <ul class="modern-menu">
-            {% if current_user.is_authenticated and current_user.rol.nombre_rol == 'admin' %}
-                <li class="menu-item">
-                    <a href="{{ url_for('inventory.consultar_inventario') }}">
-                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        <span>Consultar Inventario</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ url_for('inventory.cargar_insumos') }}">
-                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span>Cargar Insumos</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ url_for('inventory.entrada_insumos') }}">
-                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                        </svg>
-                        <span>Entrada Insumos</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ url_for('orders.solicitar_insumos') }}">
-                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span>Solicitar Insumos</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ url_for('orders.solicitudes_pendientes') }}">
-                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                        <span>Ver Solicitudes</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ url_for('inventory.salida_insumos') }}">
-                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                        <span>Salida Insumos</span>
-                    </a>
-                </li>
-            {% else %}
-                <li class="menu-item">
-                    <a href="{{ url_for('orders.solicitar_insumos') }}">
-                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span>Solicitar Insumos</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="{{ url_for('orders.mis_solicitudes') }}">
-                        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                        <span>Ver Solicitudes</span>
-                    </a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-</div>
+    <div class="surface-gradient p-6 rounded-xl border border-charcoal-700/50 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Pendientes</span>
+            <span class="material-symbols-outlined text-primary">pending_actions</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-semibold text-white">--</p>
+            <span class="text-xs text-slate-500">Solicitudes</span>
+        </div>
+    </div>
+
+    <div class="surface-gradient p-6 rounded-xl border border-charcoal-700/50 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Entradas Hoy</span>
+            <span class="material-symbols-outlined text-emerald-500">login</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-semibold text-white">--</p>
+            <span class="text-xs text-emerald-500 font-medium">Registros</span>
+        </div>
+    </div>
+
+    <div class="surface-gradient p-6 rounded-xl border border-charcoal-700/50 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Insumos</span>
+            <span class="material-symbols-outlined text-slate-500">list_alt</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+            <p class="text-3xl font-semibold text-white">--</p>
+            <span class="text-xs text-slate-500">Global</span>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ============================================ -->
+<!-- MÓDULOS OPERATIVOS                           -->
+<!-- ============================================ -->
+<section>
+    <div class="flex items-center gap-4 mb-8">
+        {% if current_user.is_authenticated and current_user.rol.nombre_rol == 'admin' %}
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-[0.3em]">Módulos Operativos</h2>
+        {% else %}
+        <h2 class="text-xs font-bold text-slate-500 uppercase tracking-[0.3em]">Solicitudes</h2>
+        {% endif %}
+        <div class="h-px bg-charcoal-800 flex-1"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+        {% if current_user.is_authenticated and current_user.rol.nombre_rol == 'admin' %}
+        {# ============================================ #}
+        {# VISTA ADMIN: Todas las cards                 #}
+        {# ============================================ #}
+
+        <!-- Consultar Inventario -->
+        <div class="group bg-charcoal-800/40 p-8 rounded-2xl border border-charcoal-700/50 hover:bg-charcoal-800 hover:border-charcoal-600 transition-all flex flex-col h-full">
+            <div class="size-12 bg-charcoal-700/50 rounded flex items-center justify-center text-slate-300 mb-8 group-hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">search_check</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-3">Consultar Inventario</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-10 flex-1">
+                Análisis en tiempo real de niveles de stock y seguimiento detallado de insumos.
+            </p>
+            <a href="{{ url_for('inventory.consultar_inventario') }}" 
+               class="w-full bg-primary text-charcoal-950 py-3 rounded font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                Abrir Catálogo
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Cargar Insumos -->
+        <div class="group bg-charcoal-800/40 p-8 rounded-2xl border border-charcoal-700/50 hover:bg-charcoal-800 hover:border-charcoal-600 transition-all flex flex-col h-full">
+            <div class="size-12 bg-charcoal-700/50 rounded flex items-center justify-center text-slate-300 mb-8 group-hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">upload_file</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-3">Cargar Insumos</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-10 flex-1">
+                Registro de nuevos insumos al catálogo mediante entrada manual.
+            </p>
+            <a href="{{ url_for('inventory.cargar_insumos') }}" 
+               class="w-full bg-primary text-charcoal-950 py-3 rounded font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                Importar Datos
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Entrada de Insumos -->
+        <div class="group bg-charcoal-800/40 p-8 rounded-2xl border border-charcoal-700/50 hover:bg-charcoal-800 hover:border-charcoal-600 transition-all flex flex-col h-full">
+            <div class="size-12 bg-charcoal-700/50 rounded flex items-center justify-center text-slate-300 mb-8 group-hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">login</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-3">Entrada de Insumos</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-10 flex-1">
+                Registro de llegadas logísticas, reabastecimiento y recepción de almacén.
+            </p>
+            <a href="{{ url_for('inventory.entrada_insumos') }}" 
+               class="w-full bg-primary text-charcoal-950 py-3 rounded font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                Ver Entradas
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Solicitar Insumos -->
+        <div class="group bg-charcoal-800/40 p-8 rounded-2xl border border-charcoal-700/50 hover:bg-charcoal-800 hover:border-charcoal-600 transition-all flex flex-col h-full">
+            <div class="size-12 bg-charcoal-700/50 rounded flex items-center justify-center text-slate-300 mb-8 group-hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">shopping_cart_checkout</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-3">Solicitar Insumos</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-10 flex-1">
+                Portal interno de aprovisionamiento para solicitudes departamentales.
+            </p>
+            <a href="{{ url_for('orders.solicitar_insumos') }}" 
+               class="w-full bg-primary text-charcoal-950 py-3 rounded font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                Nueva Solicitud
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Ver Solicitudes (Admin → solicitudes_pendientes) -->
+        <div class="group bg-charcoal-800/40 p-8 rounded-2xl border border-charcoal-700/50 hover:bg-charcoal-800 hover:border-charcoal-600 transition-all flex flex-col h-full">
+            <div class="size-12 bg-charcoal-700/50 rounded flex items-center justify-center text-slate-300 mb-8 group-hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">assignment</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-3">Ver Solicitudes</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-10 flex-1">
+                Monitoreo de solicitudes pendientes, aprobaciones y ciclos de entrega.
+            </p>
+            <a href="{{ url_for('orders.solicitudes_pendientes') }}" 
+               class="w-full bg-primary text-charcoal-950 py-3 rounded font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                Manejar Solicitudes
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Salida de Insumos -->
+        <div class="group bg-charcoal-800/40 p-8 rounded-2xl border border-charcoal-700/50 hover:bg-charcoal-800 hover:border-charcoal-600 transition-all flex flex-col h-full">
+            <div class="size-12 bg-charcoal-700/50 rounded flex items-center justify-center text-slate-300 mb-8 group-hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">logout</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white mb-3">Salida de Insumos</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-10 flex-1">
+                Control de despachos, entregas y transferencias entre dependencias.
+            </p>
+            <a href="{{ url_for('inventory.salida_insumos') }}" 
+               class="w-full bg-primary text-charcoal-950 py-3 rounded font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                Ver Salidas
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        {% else %}
+        {# ============================================ #}
+        {# VISTA USUARIO: Solo Solicitar + Mis Solicitudes #}
+        {# ============================================ #}
+
+        <!-- Solicitar Insumos -->
+        <div class="group bg-charcoal-800/40 p-8 rounded-2xl border border-charcoal-700/50 hover:bg-charcoal-800 hover:border-charcoal-600 transition-all flex flex-col h-full">
+            <div class="size-14 bg-charcoal-700/50 rounded flex items-center justify-center text-slate-300 mb-8 group-hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-3xl">shopping_cart_checkout</span>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-3">Solicitar Insumos</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-10 flex-1">
+                Portal interno de aprovisionamiento para solicitudes departamentales. Realice pedidos de material e insumos necesarios para su área.
+            </p>
+            <a href="{{ url_for('orders.solicitar_insumos') }}" 
+               class="w-full bg-primary text-charcoal-950 py-3.5 rounded font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                Nueva Solicitud
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Ver Solicitudes (Usuario → mis_solicitudes) -->
+        <div class="group bg-charcoal-800/40 p-8 rounded-2xl border border-charcoal-700/50 hover:bg-charcoal-800 hover:border-charcoal-600 transition-all flex flex-col h-full">
+            <div class="size-14 bg-charcoal-700/50 rounded flex items-center justify-center text-slate-300 mb-8 group-hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-3xl">assignment</span>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-3">Ver Solicitudes</h3>
+            <p class="text-slate-400 text-sm leading-relaxed mb-10 flex-1">
+                Consulte el historial y estado de sus solicitudes. Revise documentos de entrega y realice seguimiento en tiempo real.
+            </p>
+            <a href="{{ url_for('orders.mis_solicitudes') }}" 
+               class="w-full bg-primary text-charcoal-950 py-3.5 rounded font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                Mis Solicitudes
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        {% endif %}
+
+    </div>
+</section>
 
 {% endblock %}

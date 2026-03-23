@@ -37,3 +37,7 @@ Reglas de Negocio: Calcular stock, validar positivos (CPU bound/DB bound).
 Formateo de Datos: Generar Strings CSV (IO bound).
 El servicio sabe demasiado sobre cómo se exportan los datos. Si mañana quieres exportar a PDF o Excel (.xlsx), tendrás que ensuciar más el servicio.
 ============================================================
+
+
+Arreglar los mensajes con toast.
+.\tailwindcss.exe -i app/static/css/input.css -o app/static/css/output.css --watch

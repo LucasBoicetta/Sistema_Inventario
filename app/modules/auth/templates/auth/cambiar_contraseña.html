@@ -1,38 +1,399 @@
-{% extends "base.html" %}
-{% block title %}Cambiar Contraseña{% endblock %}
-{% block content %}
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Cambiar Contraseña - SGQ Inventario</title>
+    
+    <!-- Fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
 
-<div class="page-wrapper">
-    <div class="content-card content-card-small">
-        <h1 class="page-title">Cambiar Contraseña</h1>
-        
-        <form method="POST">
-            <div class="form-group">
-                <label class="form-label">Contraseña Actual</label>
-                <input type="password" name="contraseña_actual" class="form-control" placeholder="Contraseña actual" required>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
+</head>
+
+<body class="bg-charcoal-gradient text-slate-200 font-display min-h-screen flex items-center justify-center p-6 overflow-hidden">
+    
+    <div class="w-full max-w-2xl">
+
+        <!-- =============================== -->
+        <!-- HEADER COMPACTO                 -->
+        <!-- =============================== -->
+        <div class="flex items-center justify-center gap-4 mb-6">
+            <div class="size-12 bg-primary rounded-xl flex items-center justify-center text-charcoal-900 shadow-xl shadow-primary/20">
+                <span class="material-symbols-outlined text-2xl font-bold">lock_reset</span>
             </div>
-            
-            <div class="form-group">
-                <label class="form-label">Nueva Contraseña</label>
-                <input type="password" name="nueva_contraseña" class="form-control" placeholder="Nueva contraseña" required>
+            <div>
+                <h1 class="text-2xl font-black text-white tracking-tight">
+                    SGQ <span class="text-primary">Inventario</span>
+                </h1>
+                <p class="text-slate-500 text-xs font-medium">Actualizar Credenciales de Acceso</p>
             </div>
-            
-            <div class="form-group">
-                <label class="form-label">Confirmar Contraseña</label>
-                <input type="password" name="confirmar_contraseña" class="form-control" placeholder="Confirmar nueva contraseña" required>
-            </div>
-            
-            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-                Cambiar Contraseña
-            </button>
-        </form>
-        
-        <div class="btn-back-container">
-            <a href="{{ url_for('main.index') }}" class="btn-back">
-                ← Volver al menú
-            </a>
         </div>
-    </div>
-</div>
 
-{% endblock %}
+        <!-- =============================== -->
+        <!-- CARD: Layout de 2 columnas      -->
+        <!-- =============================== -->
+        <div class="bg-charcoal-700/50 backdrop-blur-xl border border-white/5 rounded-2xl p-8 shadow-premium">
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-6 space-y-2">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }} flex items-center gap-2 px-4 py-2.5 rounded-lg" role="alert">
+                                <span class="material-symbols-outlined text-base">
+                                    {% if category == 'danger' %}error{% elif category == 'warning' %}warning{% elif category == 'success' %}check_circle{% else %}info{% endif %}
+                                </span>
+                                <span class="text-sm">{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Formulario: Grid 2 columnas -->
+            <form method="POST" 
+                  id="change-password-form" 
+                  class="grid grid-cols-1 lg:grid-cols-2 gap-6" 
+                  novalidate>
+                
+                <!-- ============== COLUMNA IZQUIERDA: CAMPOS ============== -->
+                <div class="space-y-5">
+                    <!-- Título -->
+                    <div class="mb-4">
+                        <h2 class="text-lg font-bold text-white">Cambiar Contraseña</h2>
+                        <p class="text-slate-500 text-xs">Verifique su identidad antes de continuar.</p>
+                    </div>
+
+                    <!-- Campo: Contraseña Actual -->
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2" 
+                               for="contraseña_actual">
+                            Contraseña Actual
+                        </label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-lg">lock</span>
+                            </div>
+                            <input 
+                                type="password" 
+                                id="contraseña_actual"
+                                name="contraseña_actual"
+                                class="block w-full bg-charcoal-800 border border-white/5 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none"
+                                placeholder="Ingrese contraseña actual"
+                                autocomplete="current-password"
+                                required>
+                        </div>
+                    </div>
+
+                    <!-- Separador -->
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-white/5"></div>
+                        </div>
+                        <div class="relative flex justify-center">
+                            <span class="bg-charcoal-700/50 px-2 text-[9px] font-bold uppercase tracking-widest text-slate-600">
+                                Nueva Credencial
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Campo: Nueva Contraseña -->
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2" 
+                               for="nueva_contraseña">
+                            Nueva Contraseña
+                        </label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-lg">lock_open</span>
+                            </div>
+                            <input 
+                                type="password" 
+                                id="nueva_contraseña"
+                                name="nueva_contraseña"
+                                class="block w-full bg-charcoal-800 border border-white/5 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none"
+                                placeholder="Mínimo 8 caracteres"
+                                autocomplete="new-password"
+                                required>
+                        </div>
+                        <!-- Indicador de Fuerza -->
+                        <div class="mt-2">
+                            <div class="flex gap-1">
+                                <div id="strength-bar-1" class="h-1 flex-1 bg-charcoal-800 rounded-full transition-colors"></div>
+                                <div id="strength-bar-2" class="h-1 flex-1 bg-charcoal-800 rounded-full transition-colors"></div>
+                                <div id="strength-bar-3" class="h-1 flex-1 bg-charcoal-800 rounded-full transition-colors"></div>
+                            </div>
+                            <p class="text-[9px] text-slate-600 mt-1 uppercase tracking-wider font-semibold">
+                                <span id="password-strength">Sin evaluar</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Campo: Confirmar Contraseña -->
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2" 
+                               for="confirmar_contraseña">
+                            Confirmar Contraseña
+                        </label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 group-focus-within:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-lg">verified</span>
+                            </div>
+                            <input 
+                                type="password" 
+                                id="confirmar_contraseña"
+                                name="confirmar_contraseña"
+                                class="block w-full bg-charcoal-800 border border-white/5 rounded-lg pl-10 pr-3 py-2.5 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none"
+                                placeholder="Repita la contraseña"
+                                autocomplete="new-password"
+                                required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============== COLUMNA DERECHA: INFO + BOTONES ============== -->
+                <div class="flex flex-col justify-between space-y-5">
+                    <!-- Requisitos de Seguridad -->
+                    <div class="bg-charcoal-800/50 border border-white/5 rounded-lg p-4">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">shield</span>
+                            Requisitos de Seguridad
+                        </p>
+                        <ul class="space-y-2 text-xs text-slate-400">
+                            <li class="flex items-center gap-2" id="req-length">
+                                <span class="material-symbols-outlined text-sm text-slate-600">radio_button_unchecked</span>
+                                Mínimo 8 caracteres
+                            </li>
+                            <li class="flex items-center gap-2" id="req-uppercase">
+                                <span class="material-symbols-outlined text-sm text-slate-600">radio_button_unchecked</span>
+                                Al menos una letra mayúscula
+                            </li>
+                            <li class="flex items-center gap-2" id="req-number">
+                                <span class="material-symbols-outlined text-sm text-slate-600">radio_button_unchecked</span>
+                                Al menos un número o símbolo
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Card de Info Adicional -->
+                    <div class="bg-primary/5 border border-primary/10 rounded-lg p-4">
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-primary text-xl">info</span>
+                            <div>
+                                <p class="text-xs font-semibold text-white mb-1">Recomendación de Seguridad</p>
+                                <p class="text-[11px] text-slate-400 leading-relaxed">
+                                    Utilice una contraseña única que no comparta con otras cuentas. Evite información personal fácil de adivinar.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones (al final de la columna) -->
+                    <div class="space-y-3 mt-auto">
+                        <!-- Botón Submit -->
+                        <button type="submit" 
+                                id="submit-btn"
+                                class="w-full bg-primary hover:bg-yellow-300 text-charcoal-900 py-3 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span id="btn-text">Actualizar Contraseña</span>
+                            <span class="material-symbols-outlined text-base" id="btn-icon">check</span>
+                            <svg id="btn-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Botón Volver -->
+                        <a href="{{ url_for('main.index') }}" 
+                           class="block w-full text-center py-3 rounded-lg font-bold text-xs uppercase tracking-widest text-slate-400 hover:text-white border border-white/5 hover:border-white/10 transition-all">
+                            <span class="flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-base">arrow_back</span>
+                                Volver al menú
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- =============================== -->
+        <!-- FOOTER COMPACTO                 -->
+        <!-- =============================== -->
+        <footer class="mt-6 flex items-center justify-center gap-4 text-[9px] uppercase tracking-[0.2em] font-bold text-slate-600">
+            <span class="flex items-center gap-1.5">
+                <span class="size-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                Sistema Activo
+            </span>
+            <span class="w-1 h-1 bg-slate-700 rounded-full"></span>
+            <span>v1.0.0</span>
+            <span class="w-1 h-1 bg-slate-700 rounded-full"></span>
+            <span>Conexión Segura</span>
+        </footer>
+    </div>
+
+    <!-- =============================== -->
+    <!-- JavaScript Mejorado             -->
+    <!-- =============================== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('change-password-form');
+            const btn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+            const btnSpinner = document.getElementById('btn-spinner');
+            
+            const nuevaPassword = document.getElementById('nueva_contraseña');
+            const confirmarPassword = document.getElementById('confirmar_contraseña');
+            const strengthIndicator = document.getElementById('password-strength');
+            
+            const strengthBars = [
+                document.getElementById('strength-bar-1'),
+                document.getElementById('strength-bar-2'),
+                document.getElementById('strength-bar-3')
+            ];
+
+            const requirements = {
+                length: document.getElementById('req-length'),
+                uppercase: document.getElementById('req-uppercase'),
+                number: document.getElementById('req-number')
+            };
+
+            // Validación visual de requisitos + fuerza
+            nuevaPassword.addEventListener('input', () => {
+                const value = nuevaPassword.value;
+                let score = 0;
+
+                // Reset barras
+                strengthBars.forEach(bar => {
+                    bar.className = 'h-1 flex-1 bg-charcoal-800 rounded-full transition-colors';
+                });
+
+                // Requisito: Longitud
+                if (value.length >= 8) {
+                    score++;
+                    updateRequirement(requirements.length, true);
+                } else {
+                    updateRequirement(requirements.length, false);
+                }
+
+                // Requisito: Mayúscula
+                if (/[A-Z]/.test(value)) {
+                    score++;
+                    updateRequirement(requirements.uppercase, true);
+                } else {
+                    updateRequirement(requirements.uppercase, false);
+                }
+
+                // Requisito: Número o símbolo
+                if (/[0-9!@#$%^&*]/.test(value)) {
+                    score++;
+                    updateRequirement(requirements.number, true);
+                } else {
+                    updateRequirement(requirements.number, false);
+                }
+
+                // Actualizar barras y texto
+                if (score === 0) {
+                    strengthIndicator.textContent = 'Sin evaluar';
+                    strengthIndicator.className = 'text-slate-600 font-bold';
+                } else if (score === 1) {
+                    strengthIndicator.textContent = 'Débil';
+                    strengthIndicator.className = 'text-red-400 font-bold';
+                    strengthBars[0].classList.add('bg-red-500');
+                } else if (score === 2) {
+                    strengthIndicator.textContent = 'Media';
+                    strengthIndicator.className = 'text-amber-400 font-bold';
+                    strengthBars[0].classList.add('bg-amber-500');
+                    strengthBars[1].classList.add('bg-amber-500');
+                } else if (score === 3) {
+                    strengthIndicator.textContent = 'Fuerte';
+                    strengthIndicator.className = 'text-emerald-400 font-bold';
+                    strengthBars.forEach(bar => bar.classList.add('bg-emerald-500'));
+                }
+            });
+
+            function updateRequirement(element, valid) {
+                const icon = element.querySelector('.material-symbols-outlined');
+                if (valid) {
+                    icon.textContent = 'check_circle';
+                    icon.className = 'material-symbols-outlined text-sm text-emerald-500';
+                    element.classList.add('text-emerald-400');
+                } else {
+                    icon.textContent = 'radio_button_unchecked';
+                    icon.className = 'material-symbols-outlined text-sm text-slate-600';
+                    element.classList.remove('text-emerald-400');
+                }
+            }
+
+            // Validar coincidencia
+            confirmarPassword.addEventListener('blur', () => {
+                if (confirmarPassword.value && confirmarPassword.value !== nuevaPassword.value) {
+                    confirmarPassword.classList.add('!border-red-500/50', '!ring-1', '!ring-red-500/30');
+                } else {
+                    confirmarPassword.classList.remove('!border-red-500/50', '!ring-1', '!ring-red-500/30');
+                }
+            });
+
+            // Submit
+            form.addEventListener('submit', (e) => {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    highlightEmptyFields();
+                    return;
+                }
+
+                if (nuevaPassword.value !== confirmarPassword.value) {
+                    e.preventDefault();
+                    alert('Las contraseñas no coinciden');
+                    return;
+                }
+
+                btn.disabled = true;
+                btnText.textContent = 'Actualizando...';
+                btnIcon.classList.add('hidden');
+                btnSpinner.classList.remove('hidden');
+            });
+
+            function highlightEmptyFields() {
+                form.querySelectorAll('input[required]').forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('!border-red-500/50', '!ring-1', '!ring-red-500/30');
+                        
+                        input.addEventListener('input', function handler() {
+                            input.classList.remove('!border-red-500/50', '!ring-1', '!ring-red-500/30');
+                            input.removeEventListener('input', handler);
+                        });
+                    }
+                });
+            }
+
+            // Auto-ocultar flash
+            setTimeout(() => {
+                document.querySelectorAll('.flash-message').forEach(el => {
+                    el.style.transition = 'opacity 0.5s ease';
+                    el.style.opacity = '0';
+                    setTimeout(() => el.remove(), 500);
+                });
+            }, 4000);
+        });
+    </script>
+</body>
+</html>

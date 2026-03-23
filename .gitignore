@@ -48,3 +48,7 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+# Archivos de Tailwind CSS
+tailwindcss.exe
+app/static/css/output.css

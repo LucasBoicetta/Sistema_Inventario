@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}Carga Múltiple de Insumos{% endblock %}
+
+{% block header_search %}
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <a href="{{ url_for('inventory.cargar_insumos') }}" class="hover:text-slate-300">Cargar Insumos</a>
+    <span>/</span>
+    <span class="text-slate-200">Carga Múltiple</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('inventory.cargar_insumos') }}" 
+   class="flex items-center gap-2 px-4 py-2 border border-charcoal-700 bg-charcoal-800 text-slate-200 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors">
+    <span class="material-symbols-outlined text-lg">arrow_back</span>
+    Carga Individual
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================ -->
+<!-- TÍTULO DE PÁGINA                             -->
+<!-- ============================================ -->
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Carga <span class="font-bold text-primary">Múltiple</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Ingrese varios insumos en una sola operación
+        </p>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FORMULARIO MÚLTIPLE                          -->
+<!-- ============================================ -->
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl p-8">
+    <form method="POST" id="form-multiple">
+        {{ form.hidden_tag() }}
+        
+        <!-- Tabla de insumos -->
+        <div class="overflow-x-auto mb-6">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-charcoal-700">
+                        <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">#</th>
+                        <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Código *</th>
+                        <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Descripción</th>
+                        <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Cantidad *</th>
+                        <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Proveedor *</th>
+                        <th class="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="insumos-tbody" class="divide-y divide-charcoal-800/50">
+                    {% for subform in form.insumos %}
+                    <tr class="hover:bg-white/[0.03] transition-colors" data-row-index="{{ loop.index0 }}">
+                        <td class="px-4 py-3 text-sm text-slate-400 font-mono">{{ loop.index }}</td>
+                        
+                        <!-- Código -->
+                        <td class="px-4 py-3">
+                            {{ subform.codigo_producto(class="w-full bg-charcoal-950 border border-charcoal-700 rounded px-3 py-2 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none uppercase", placeholder="INS001", autocomplete="off") }}
+                        </td>
+                        
+                        <!-- Descripción -->
+                        <td class="px-4 py-3">
+                            {{ subform.descripcion(class="w-full bg-charcoal-950 border border-charcoal-700 rounded px-3 py-2 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none", placeholder="Opcional", autocomplete="off") }}
+                        </td>
+                        
+                        <!-- Cantidad -->
+                        <td class="px-4 py-3">
+                            {{ subform.cantidad_entradas(class="w-20 bg-charcoal-950 border border-charcoal-700 rounded px-3 py-2 text-sm text-slate-300 text-center focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none", type="number", min="1", value="1") }}
+                        </td>
+                        
+                        <!-- Proveedor -->
+                        <td class="px-4 py-3">
+                            {{ subform.proveedor(class="w-full bg-charcoal-950 border border-charcoal-700 rounded px-3 py-2 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none", placeholder="Nombre del proveedor", autocomplete="off") }}
+                        </td>
+                        
+                        <!-- Botón eliminar -->
+                        <td class="px-4 py-3 text-center">
+                            <button type="button" 
+                                    class="btn-eliminar-fila inline-flex items-center justify-center size-8 rounded-lg bg-rose-600/10 hover:bg-rose-600 text-rose-400 hover:text-white transition-all"
+                                    onclick="eliminarFila(this)">
+                                <span class="material-symbols-outlined text-lg">close</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="flex items-center justify-between pt-6 border-t border-charcoal-700">
+            <button type="button" 
+                    id="btn-agregar-fila"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-charcoal-800 hover:bg-charcoal-700 text-slate-300 border border-charcoal-700 rounded-lg text-xs font-bold uppercase tracking-wider transition-all">
+                <span class="material-symbols-outlined text-sm">add</span>
+                Agregar Fila
+            </button>
+            
+            <div class="flex gap-3">
+                <a href="{{ url_for('inventory.consultar_inventario') }}" 
+                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-charcoal-800 hover:bg-charcoal-700 text-slate-400 hover:text-white border border-charcoal-700 rounded-lg text-xs font-bold uppercase tracking-wider transition-all">
+                    <span class="material-symbols-outlined text-sm">cancel</span>
+                    Cancelar
+                </a>
+                
+                {{ form.submit(class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-primary/20") }}
+            </div>
+        </div>
+    </form>
+</section>
+
+<!-- ============================================ -->
+<!-- INFORMACIÓN Y AYUDA                          -->
+<!-- ============================================ -->
+<section class="bg-charcoal-900/50 border border-charcoal-700/50 rounded-xl p-6">
+    <div class="flex gap-4">
+        <span class="material-symbols-outlined text-primary text-2xl">info</span>
+        <div class="space-y-2">
+            <h3 class="text-sm font-bold text-white">Instrucciones</h3>
+            <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                <li><strong>Código:</strong> Si el código ya existe, se actualizará el stock (la descripción se ignora)</li>
+                <li><strong>Descripción:</strong> Obligatoria solo para códigos nuevos</li>
+                <li><strong>Proveedor:</strong> Se creará automáticamente si no existe</li>
+                <li><strong>Cantidad:</strong> Debe ser mayor a 0</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- JAVASCRIPT                                   -->
+<!-- ============================================ -->
+<script>
+let contadorFilas = {{ form.insumos|length }};
+
+// Agregar nueva fila
+document.getElementById('btn-agregar-fila').addEventListener('click', function() {
+    if (contadorFilas >= 20) {
+        alert('Máximo 20 insumos por lote. Use importación CSV para cantidades mayores.');
+        return;
+    }
+    
+    const tbody = document.getElementById('insumos-tbody');
+    const ultimaFila = tbody.querySelector('tr:last-child');
+    const nuevaFila = ultimaFila.cloneNode(true);
+    
+    // Limpiar valores
+    nuevaFila.querySelectorAll('input').forEach(input => {
+        input.value = input.name.includes('cantidad') ? '1' : '';
+    });
+    
+    // Actualizar índices
+    contadorFilas++;
+    nuevaFila.querySelector('td:first-child').textContent = contadorFilas;
+    nuevaFila.dataset.rowIndex = contadorFilas - 1;
+    
+    // Actualizar names de inputs
+    nuevaFila.querySelectorAll('input').forEach(input => {
+        const name = input.name.replace(/insumos-\d+/, `insumos-${contadorFilas - 1}`);
+        const id = input.id.replace(/insumos-\d+/, `insumos-${contadorFilas - 1}`);
+        input.name = name;
+        input.id = id;
+    });
+    
+    tbody.appendChild(nuevaFila);
+});
+
+// Eliminar fila
+function eliminarFila(btn) {
+    const tbody = document.getElementById('insumos-tbody');
+    const filas = tbody.querySelectorAll('tr');
+    
+    if (filas.length <= 1) {
+        alert('Debe haber al menos una fila');
+        return;
+    }
+    
+    btn.closest('tr').remove();
+    
+    // Renumerar filas
+    tbody.querySelectorAll('tr').forEach((fila, idx) => {
+        fila.querySelector('td:first-child').textContent = idx + 1;
+    });
+    
+    contadorFilas = tbody.querySelectorAll('tr').length;
+}
+
+// Convertir códigos a mayúsculas automáticamente
+document.addEventListener('input', function(e) {
+    if (e.target.name && e.target.name.includes('codigo_producto')) {
+        e.target.value = e.target.value.toUpperCase().replace(/\s/g, '');
+    }
+});
+</script>
+
+{% endblock %}
