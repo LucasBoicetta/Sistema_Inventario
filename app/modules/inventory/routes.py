@@ -118,6 +118,7 @@ def cargar_insumos_multiple():
             logger.error(f"Error crítico al cargar insumos múltiples: {str(e)}", exc_info=True)
             flash('Error interno del servidor. Consulte al administrador.', 'danger')
 
+    return render_template('inventory/cargar_insumos_multiple.html', form=form)
 
 @inventory_bp.route('/importar_insumos', methods=['GET', 'POST'])
 @admin_required

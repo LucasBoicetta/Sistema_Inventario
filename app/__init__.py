@@ -8,11 +8,12 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from flask_wtf import CSRFProtect
+from app.shared.errors import register_error_handlers
 
 #1. Inicialización de la app.
 app = Flask(__name__)
 app.config.from_object(Config)
-
+register_error_handlers(app)
 #2. Configuracion de Logging (Sistema de Auditoría).
 #Solo activamos logs en archivo si no estamos en modo debug (o puedes quitar el if para tenerlos siempre)
 if not app.debug or True: #True fuerza la creación de logs incluso en desarrollo para probar.
