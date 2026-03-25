@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Consultar Inventario{% endblock %}
+
+{% block header_search %}
+<!-- Breadcrumb -->
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <span class="text-slate-200">Consultar Inventario</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<!-- ✅ EXPORTAR CSV MOVIDO AQUÍ -->
+<a href="{{ url_for('inventory.exportar_inventario') }}" 
+   class="flex items-center gap-2 px-4 py-2 border border-charcoal-700 bg-charcoal-800 text-slate-200 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors">
+    <span class="material-symbols-outlined text-lg">download</span>
+    Exportar CSV
+</a>
+
+{% endblock %}
+
+{% block content %}
+
+<!-- TÍTULO (SIN BOTÓN CSV) -->
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Consultar <span class="font-bold text-primary">Inventario</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Revisando {{ pagination.total }} registros del inventario
+        </p>
+    </div>
+</section>
+
+<!-- BARRA DE FILTROS -->
+<section class="surface-gradient border border-charcoal-700/50 p-6 rounded-2xl shadow-xl">
+    <form method="GET" action="{{ url_for('inventory.consultar_inventario') }}" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div class="md:col-span-10 relative group">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+            <input class="w-full bg-charcoal-900/50 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none" 
+                   name="filtro"
+                   placeholder="Buscar por código o descripción..." 
+                   value="{{ request.args.get('filtro', '') }}"
+                   type="text"/>
+        </div>
+        <div class="md:col-span-2">
+            <button type="submit" 
+                    class="w-full h-full px-4 py-2.5 bg-primary text-charcoal-950 rounded-lg font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+                <span class="material-symbols-outlined text-lg">filter_list</span>
+                Filtrar
+            </button>
+        </div>
+    </form>
+</section>
+
+<!-- TABLA DE INVENTARIO -->
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-950/40">
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">Código</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">Descripción</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Exist. Iniciales</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Entradas</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Salidas</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500">% Utilizado</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-slate-500 text-center">Stock Actual</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-charcoal-800/50">
+                {% for insumo in insumos %}
+                <tr class="transition-colors hover:bg-white/[0.03] cursor-default">
+                    <td class="px-6 py-4 text-sm font-mono text-primary/80">{{ insumo.codigo_insumo }}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-white">{{ insumo.descripcion }}</td>
+                    <td class="px-6 py-4 text-sm text-slate-300 text-center">{{ insumo.existencias_iniciales_anio or 0 }}</td>
+                    <td class="px-6 py-4 text-center">
+                        {% if (insumo.cantidad_entradas or 0) > 0 %}
+                            <span class="text-sm font-semibold text-emerald-400">+{{ insumo.cantidad_entradas }}</span>
+                        {% else %}
+                            <span class="text-sm text-slate-500">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if (insumo.cantidad_salidas or 0) > 0 %}
+                            <span class="text-sm font-semibold text-rose-400">-{{ insumo.cantidad_salidas }}</span>
+                        {% else %}
+                            <span class="text-sm text-slate-500">0</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        {% set pct = insumo.porcentaje_utilizado or 0 %}
+                        <div class="flex items-center gap-3">
+                            <div class="flex-1 h-1.5 bg-charcoal-800 rounded-full max-w-[80px]">
+                                <div class="h-full rounded-full
+                                    {% if pct >= 80 %}bg-rose-500
+                                    {% elif pct >= 50 %}bg-orange-400
+                                    {% elif pct >= 20 %}bg-primary
+                                    {% else %}bg-emerald-500{% endif %}"
+                                    style="width: {{ [pct, 100] | min }}%">
+                                </div>
+                            </div>
+                            <span class="text-xs font-semibold
+                                {% if pct >= 80 %}text-rose-500
+                                {% elif pct >= 50 %}text-orange-400
+                                {% else %}text-slate-300{% endif %}">
+                                {{ "%.1f"|format(pct) }}%
+                            </span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% set stock = insumo.stock_actual or 0 %}
+                        <span class="text-sm font-bold
+                            {% if stock <= 0 %}text-rose-500
+                            {% elif stock <= 10 %}text-orange-400
+                            {% else %}text-white{% endif %}">
+                            {{ stock }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="px-6 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <span class="material-symbols-outlined text-4xl text-charcoal-600">inventory_2</span>
+                            <p class="text-slate-500 text-sm">No se encontraron insumos</p>
+                            {% if request.args.get('filtro') %}
+                                <a href="{{ url_for('inventory.consultar_inventario') }}" 
+                                   class="text-primary text-xs hover:underline">Limpiar filtro</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- PAGINACIÓN -->
+    <div class="px-6 py-5 border-t border-charcoal-700 bg-charcoal-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-xs text-slate-500 font-medium">
+            Mostrando página {{ pagination.page }} de {{ pagination.pages }} 
+            ({{ pagination.total }} registros)
+        </p>
+        <div class="flex items-center gap-2">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('inventory.consultar_inventario', page=pagination.prev_num, filtro=filtro) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </button>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <span class="flex items-center justify-center size-9 rounded-lg bg-primary text-charcoal-950 font-bold text-xs shadow-lg shadow-primary/10">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="{{ url_for('inventory.consultar_inventario', page=page_num, filtro=filtro) }}" 
+                           class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 text-slate-400 hover:border-slate-500 hover:text-white transition-all text-xs font-bold">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="text-slate-600 px-1">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <a href="{{ url_for('inventory.consultar_inventario', page=pagination.next_num, filtro=filtro) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Entradas de Stock{% endblock %}
+
+{% block header_search %}
+<!-- Breadcrumb -->
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <span class="text-slate-200">Entradas de Stock</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('inventory.exportar_entradas') }}" 
+   class="flex items-center gap-2 px-4 py-2 border border-charcoal-700 bg-charcoal-800 text-slate-200 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors">
+    <span class="material-symbols-outlined text-lg">download</span>
+    Exportar CSV
+</a>
+
+{% if current_user.is_authenticated and current_user.rol.nombre_rol == 'admin' %}
+<a href="{{ url_for('inventory.cargar_insumos') }}" 
+   class="px-5 py-2.5 bg-primary text-charcoal-950 rounded font-semibold text-sm flex items-center gap-2 shadow-xl shadow-primary/10 hover:brightness-110 active:scale-95 transition-all">
+    <span class="material-symbols-outlined text-lg">add</span>
+    Nueva Entrada
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================ -->
+<!-- TÍTULO DE PÁGINA                             -->
+<!-- ============================================ -->
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Entradas de <span class="font-bold text-primary">Stock</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Registro de ingresos y reabastecimiento de inventario
+        </p>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- BARRA DE FILTROS                             -->
+<!-- ============================================ -->
+<section>
+    <form method="GET" action="{{ url_for('inventory.entrada_insumos') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        
+        <!-- Búsqueda general -->
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Buscar</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">search</span>
+                <input type="text" 
+                       name="filtro" 
+                       value="{{ filtros.filtro }}"
+                       placeholder="Código, descripción..."
+                       autocomplete="off"
+                       class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
+            </div>
+        </div>
+        
+        <!-- Fecha desde -->
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Desde</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">calendar_today</span>
+                <input type="date" 
+                       name="fecha_desde" 
+                       value="{{ filtros.fecha_desde }}"
+                       autocomplete="off"
+                       class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
+            </div>
+        </div>
+        
+        <!-- Fecha hasta -->
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hasta</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">event</span>
+                <input type="date" 
+                       name="fecha_hasta" 
+                       value="{{ filtros.fecha_hasta }}"
+                       autocomplete="off"
+                       class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
+            </div>
+        </div>
+        
+        <!-- Proveedor -->
+        <div class="space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Proveedor</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">local_shipping</span>
+                <select name="entidad_id" 
+                        class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none appearance-none">
+                    <option value="">Todos</option>
+                    {% for proveedor in proveedores %}
+                    <option value="{{ proveedor.id_proveedor }}" 
+                            {% if filtros.entidad_id == proveedor.id_proveedor|string %}selected{% endif %}>
+                        {{ proveedor.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-lg">expand_more</span>
+            </div>
+        </div>
+        
+        <!-- Botones (nueva fila completa) -->
+        <div class="md:col-span-4 flex gap-3">
+            <!-- Botón Aplicar Filtros (estilo primario amarillo) -->
+            <button type="submit" 
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-sm">filter_alt</span>
+                Filtrar
+            </button>
+            
+            <!-- Botón Limpiar (estilo secundario rojo) -->
+            <a href="{{ url_for('inventory.entrada_insumos') }}" 
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-charcoal-800 hover:bg-rose-600 text-slate-400 hover:text-white border border-charcoal-700 hover:border-rose-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-all">
+                <span class="material-symbols-outlined text-sm">refresh</span>
+                Limpiar
+            </a>
+        </div>
+    </form>
+</section>
+
+<!-- ============================================ -->
+<!-- TABLA DE ENTRADAS                            -->
+<!-- ============================================ -->
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-950/40">
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Fecha</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Insumo</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Cantidad</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Proveedor</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-charcoal-800/50">
+                {% for entrada in entradas %}
+                <tr class="transition-colors hover:bg-white/[0.03] cursor-default">
+                    <td class="px-6 py-4 text-sm text-slate-400">
+                        {{ entrada.fecha_entrada.strftime('%d/%m/%Y') }}
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-medium text-white">{{ entrada.insumo.descripcion }}</span>
+                            <span class="text-[10px] text-slate-500 font-mono">{{ entrada.insumo.codigo_insumo }}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-semibold text-emerald-400">+{{ entrada.cantidad }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs px-2.5 py-1 rounded bg-charcoal-700 text-slate-300">
+                            {{ entrada.proveedor.nombre }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-6 py-16 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <span class="material-symbols-outlined text-4xl text-charcoal-600">login</span>
+                            <p class="text-slate-500 text-sm">No se encontraron entradas</p>
+                            {% if request.args.get('filtro') %}
+                                <a href="{{ url_for('inventory.entrada_insumos') }}" 
+                                   class="text-primary text-xs hover:underline">Limpiar filtros</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- PAGINACIÓN -->
+    <div class="px-6 py-5 border-t border-charcoal-700 bg-charcoal-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-xs text-slate-500 font-medium">
+            Mostrando página {{ pagination.page }} de {{ pagination.pages }} 
+            ({{ pagination.total }} registros)
+        </p>
+        <div class="flex items-center gap-2">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('inventory.entrada_insumos', page=pagination.prev_num, **filtros) }}" 
+                class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </button>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <span class="flex items-center justify-center size-9 rounded-lg bg-primary text-charcoal-950 font-bold text-xs shadow-lg shadow-primary/10">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="{{ url_for('inventory.entrada_insumos', page=page_num, **filtros) }}" 
+                        class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 text-slate-400 hover:border-slate-500 hover:text-white transition-all text-xs font-bold">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="text-slate-600 px-1">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <a href="{{ url_for('inventory.entrada_insumos', page=pagination.next_num, **filtros) }}" 
+                class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

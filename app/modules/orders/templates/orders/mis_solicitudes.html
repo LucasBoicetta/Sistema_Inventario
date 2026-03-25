@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Mis Solicitudes{% endblock %}
+
+{% block header_search %}
+<!-- Breadcrumb -->
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <span class="text-slate-200">Mis Solicitudes</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<!-- Contador de solicitudes completadas -->
+{% if solicitudes %}
+<div class="flex items-center gap-2 px-4 py-2 border border-emerald-500/30 bg-emerald-500/10 rounded-lg">
+    <span class="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
+    <span class="text-emerald-400 font-bold text-sm">
+        {{ pagination.total }} completada{{ 's' if pagination.total != 1 else '' }}
+    </span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================ -->
+<!-- TÍTULO DE PÁGINA                             -->
+<!-- ============================================ -->
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Historial de <span class="font-bold text-primary">Solicitudes</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Revisa todas tus solicitudes completadas y entregadas
+        </p>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- TABLA DE SOLICITUDES                         -->
+<!-- ============================================ -->
+{% if solicitudes %}
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-950/40">
+                    <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-500">N° Solicitud</th>
+                    <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-500">Fecha</th>
+                    <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-500">Estado</th>
+                    <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-slate-500">Documentos</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-charcoal-800/50">
+                {% for solicitud in solicitudes %}
+                <tr class="transition-colors hover:bg-white/[0.03] group">
+                    <!-- N° de Solicitud -->
+                    <td class="px-8 py-5">
+                        <span class="text-sm font-semibold text-white">
+                            #{{ solicitud.id_solicitud }}
+                        </span>
+                    </td>
+
+                    <!-- Fecha -->
+                    <td class="px-8 py-5">
+                        <span class="text-sm text-slate-400">
+                            {{ solicitud.fecha_solicitud.strftime('%b %d, %Y') }}
+                        </span>
+                    </td>
+
+                    <!-- Estado (Badge verde) -->
+                    <td class="px-8 py-5">
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                            <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                                Completada
+                            </span>
+                        </div>
+                    </td>
+
+                    <!-- Botón Descargar PDF -->
+                    <td class="px-8 py-5">
+                        <a href="{{ url_for('orders.generar_pdf_solicitud', solicitud_id=solicitud.id_solicitud) }}" 
+                           target="_blank"
+                           class="inline-flex items-center gap-2 text-primary hover:text-white transition-colors group">
+                            <span class="text-xs font-bold uppercase tracking-widest">
+                                Descargar PDF
+                            </span>
+                            <span class="material-symbols-outlined text-xl">picture_as_pdf</span>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PAGINACIÓN                                   -->
+    <!-- ============================================ -->
+    <div class="px-8 py-6 border-t border-charcoal-700/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-xs text-slate-500 font-medium">
+            Página {{ pagination.page }} de {{ pagination.pages }} 
+            <span class="text-white font-semibold">({{ pagination.total }} solicitud{{ 'es' if pagination.total != 1 else '' }})</span>
+        </p>
+        
+        <div class="flex items-center gap-2">
+            <!-- Botón Anterior -->
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('orders.mis_solicitudes', page=pagination.prev_num) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </button>
+            {% endif %}
+            
+            <!-- Números de página -->
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <span class="flex items-center justify-center size-9 rounded-lg bg-primary text-charcoal-950 font-bold text-xs shadow-lg shadow-primary/10">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="{{ url_for('orders.mis_solicitudes', page=page_num) }}" 
+                           class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 text-slate-400 hover:border-slate-500 hover:text-white transition-all text-xs font-bold">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="text-slate-600 px-1">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            <!-- Botón Siguiente -->
+            {% if pagination.has_next %}
+                <a href="{{ url_for('orders.mis_solicitudes', page=pagination.next_num) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% else %}
+<!-- ============================================ -->
+<!-- ESTADO VACÍO                                 -->
+<!-- ============================================ -->
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl p-16">
+    <div class="flex flex-col items-center text-center gap-6">
+        <!-- Icono de carpeta vacía -->
+        <div class="w-20 h-20 bg-slate-500/10 border border-slate-500/20 rounded-full flex items-center justify-center">
+            <span class="material-symbols-outlined text-4xl text-slate-400">folder_open</span>
+        </div>
+        
+        <!-- Mensaje -->
+        <div class="space-y-2">
+            <h3 class="text-2xl font-bold text-white">Sin historial</h3>
+            <p class="text-slate-500 text-sm">Aún no tienes solicitudes completadas</p>
+        </div>
+        
+        <!-- Botón de acción -->
+        <a href="{{ url_for('orders.solicitar_insumos') }}" 
+           class="px-6 py-3 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
+            <span class="material-symbols-outlined text-lg">add_circle</span>
+            Nueva Solicitud
+        </a>
+    </div>
+</section>
+{% endif %}
+
+<!-- ============================================ -->
+<!-- BOTÓN VOLVER AL MENÚ                         -->
+<!-- ============================================ -->
+<section>
+    <a href="{{ url_for('main.index') }}" 
+       class="inline-flex items-center gap-2 px-6 py-3 bg-charcoal-700 hover:bg-charcoal-600 text-slate-200 rounded-lg font-bold text-sm transition-all border border-charcoal-600">
+        <span class="material-symbols-outlined text-lg">arrow_back</span>
+        Volver al menú
+    </a>
+</section>
+
+{% endblock %}

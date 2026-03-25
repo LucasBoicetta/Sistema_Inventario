@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Solicitar Insumos{% endblock %}
+
+{% block header_search %}
+<!-- Breadcrumb -->
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <span class="text-slate-200">Solicitar Insumos</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<!-- Badge compacto que abre dropdown -->
+<div class="relative">
+    <button id="cart-toggle" 
+            class="flex items-center gap-2 px-4 py-2 bg-charcoal-900 border-2 border-primary/40 rounded-lg hover:bg-charcoal-800 transition-all">
+        <span class="material-symbols-outlined text-primary text-xl">shopping_cart</span>
+        <span class="cart-badge-count px-2.5 py-1 bg-primary/20 border border-primary/30 text-primary rounded text-xs font-bold">
+            {{ carrito_ids|length if carrito_ids else 0 }}
+        </span>
+        <span class="material-symbols-outlined text-slate-400 text-sm">expand_more</span>
+    </button>
+    
+    <!-- Panel dropdown (oculto por defecto) -->
+    <div id="cart-dropdown" 
+         class="hidden absolute top-14 right-0 w-80 bg-charcoal-900 border-2 border-primary/40 rounded-xl shadow-2xl shadow-primary/10 overflow-hidden z-50">
+        <!-- Header -->
+        <div class="px-4 py-2.5 bg-charcoal-950/80 border-b border-charcoal-700 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-lg">shopping_cart</span>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Mi Carrito</h3>
+        </div>
+        
+        <!-- Contenido -->
+        <div id="cart-dropdown-content" class="px-4 py-3 space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Items</span>
+                <span class="cart-badge-count text-lg font-bold text-white">{{ carrito_ids|length if carrito_ids else 0 }}</span>
+            </div>
+            
+            {% if carrito_ids %}
+            <a href="{{ url_for('orders.confirmar_solicitud_insumos') }}" 
+               class="w-full py-2 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md">
+                <span class="material-symbols-outlined text-sm">check_circle</span>
+                Confirmar Solicitud
+            </a>
+            {% else %}
+            <div class="text-center py-3">
+                <span class="material-symbols-outlined text-3xl text-charcoal-600 mb-2 block">shopping_cart</span>
+                <p class="text-[10px] text-slate-500">Carrito vacío</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle dropdown
+    document.getElementById('cart-toggle')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('cart-dropdown')?.classList.toggle('hidden');
+    });
+    
+    // Cerrar al hacer click fuera
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('cart-dropdown');
+        const toggle = document.getElementById('cart-toggle');
+        if (dropdown && !dropdown.contains(e.target) && !toggle.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================ -->
+<!-- TÍTULO DE PÁGINA                             -->
+<!-- ============================================ -->
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Catálogo de <span class="font-bold text-primary">Insumos</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            Selecciona los recursos necesarios para tu solicitud institucional
+        </p>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- BARRA DE BÚSQUEDA                            -->
+<!-- ============================================ -->
+<section>
+    <form method="GET" action="{{ url_for('orders.solicitar_insumos') }}" class="flex gap-4 items-end">
+        <!-- Búsqueda principal -->
+        <div class="flex-1 space-y-2">
+            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Buscar Insumo</label>
+            <div class="relative group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">search</span>
+                <input 
+                    name="filtro"
+                    value="{{ filtro }}"
+                    class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none" 
+                    placeholder="Buscar por código o descripción..."
+                    type="text"
+                    autocomplete="off"/>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <button type="submit" 
+                class="h-[42px] px-6 bg-primary/90 hover:bg-primary text-charcoal-950 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-lg">search</span>
+            Buscar
+        </button>
+        
+        {% if filtro %}
+        <a href="{{ url_for('orders.solicitar_insumos') }}" 
+           class="h-[42px] px-4 bg-charcoal-700 hover:bg-charcoal-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center">
+            <span class="material-symbols-outlined text-lg">close</span>
+        </a>
+        {% endif %}
+    </form>
+</section>
+
+<!-- ============================================ -->
+<!-- TABLA DE CATÁLOGO                            -->
+<!-- ============================================ -->
+<section class="surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b border-charcoal-700 bg-charcoal-950/40">
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 w-1/2">Insumo</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Stock Disponible</th>
+                    <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-right">Acción</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-charcoal-800/50" id="catalog-tbody">
+                {% for insumo in insumos %}
+                    {% set en_carrito = insumo.id in carrito_ids %}
+                    <tr class="transition-colors hover:bg-white/[0.03] {{ 'bg-primary/5' if en_carrito else '' }} cursor-default" 
+                        data-insumo-id="{{ insumo.id }}"
+                        data-en-carrito="{{ 'true' if en_carrito else 'false' }}">
+                        
+                        <!-- Columna: Insumo -->
+                        <td class="px-6 py-5">
+                            <div class="flex items-center gap-4">
+                                <!-- Icono visual -->
+                                <div class="w-10 h-10 bg-charcoal-800 border border-charcoal-700 rounded flex items-center justify-center flex-shrink-0">
+                                    <span class="material-symbols-outlined text-lg {{ 'text-primary' if en_carrito else 'text-slate-400' }}">
+                                        {{ 'check_circle' if en_carrito else 'description' }}
+                                    </span>
+                                </div>
+                                <!-- Información -->
+                                <div class="flex flex-col min-w-0">
+                                    <span class="text-sm font-medium text-white truncate">{{ insumo.descripcion }}</span>
+                                    <span class="text-[10px] text-slate-500 font-mono uppercase tracking-wider">{{ insumo.codigo_insumo }}</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Columna: Stock -->
+                        <td class="px-6 py-5 text-center">
+                            <div class="flex justify-center">
+                                {% if insumo.stock_actual > 0 %}
+                                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                                        <span class="text-xs font-semibold">{{ insumo.stock_actual }}</span>
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0"></span>
+                                        <span class="text-xs font-semibold">Sin Stock</span>
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Columna: Acción -->
+                        <td class="px-6 py-5 text-right">
+                            <div class="cart-action-cell">
+                                {% if insumo.stock_actual > 0 %}
+                                    {% if en_carrito %}
+                                        <!-- Ya está en carrito -->
+                                        <button disabled 
+                                                class="inline-flex items-center gap-2 px-4 py-2 bg-primary/20 border border-primary/40 text-primary rounded-lg text-xs font-bold transition-all uppercase tracking-wider cursor-not-allowed">
+                                            <span class="material-symbols-outlined text-sm">check</span>
+                                            En Carrito
+                                        </button>
+                                    {% else %}
+                                        <!-- Formulario AJAX con tu estructura -->
+                                        <form action="{{ url_for('orders.agregar_insumos', insumo_id=insumo.id) }}" 
+                                              method="POST" 
+                                              class="ajax-add-form inline-block">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit"
+                                                    class="inline-flex items-center gap-2 px-4 py-2 bg-charcoal-700 border border-charcoal-600 hover:border-primary hover:bg-charcoal-600 text-white rounded-lg text-xs font-bold transition-all uppercase tracking-wider">
+                                                <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                                                Agregar
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <!-- Sin stock -->
+                                    <button disabled 
+                                            class="inline-flex items-center gap-2 px-4 py-2 bg-charcoal-800 border border-charcoal-700 text-slate-600 rounded-lg text-xs font-bold uppercase tracking-wider cursor-not-allowed opacity-50">
+                                        <span class="material-symbols-outlined text-sm">block</span>
+                                        Agotado
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <!-- Sin resultados -->
+                    <tr>
+                        <td colspan="3" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <span class="material-symbols-outlined text-4xl text-charcoal-600">inventory_2</span>
+                                <p class="text-slate-500 text-sm">No se encontraron insumos disponibles</p>
+                                {% if filtro %}
+                                    <a href="{{ url_for('orders.solicitar_insumos') }}" 
+                                       class="text-primary text-xs hover:underline font-medium">Limpiar búsqueda</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- PAGINACIÓN (sin cambios) -->
+    {% if pagination.pages > 1 %}
+    <div class="px-6 py-5 border-t border-charcoal-700 bg-charcoal-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-xs text-slate-500 font-medium">
+            Mostrando página {{ pagination.page }} de {{ pagination.pages }} 
+            ({{ pagination.total }} insumos)
+        </p>
+        <div class="flex items-center gap-2">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('orders.solicitar_insumos', page=pagination.prev_num, filtro=filtro) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_left</span>
+                </button>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                        <span class="flex items-center justify-center size-9 rounded-lg bg-primary text-charcoal-950 font-bold text-xs shadow-lg shadow-primary/10">
+                            {{ page_num }}
+                        </span>
+                    {% else %}
+                        <a href="{{ url_for('orders.solicitar_insumos', page=page_num, filtro=filtro) }}" 
+                           class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 text-slate-400 hover:border-slate-500 hover:text-white transition-all text-xs font-bold">
+                            {{ page_num }}
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <span class="text-slate-600 px-1">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <a href="{{ url_for('orders.solicitar_insumos', page=pagination.next_num, filtro=filtro) }}" 
+                   class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </a>
+            {% else %}
+                <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                    <span class="material-symbols-outlined text-xl">chevron_right</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+
+
+<!-- Toast container -->
+<div id="toast-container" class="fixed top-24 right-8 z-[100] space-y-3 pointer-events-none"></div>
+
+<!-- CARGAR TU MÓDULO JS -->
+<script type="module" src="{{ url_for('static', filename='js/modules/orders/index.js') }}"></script>
+
+{% endblock %}

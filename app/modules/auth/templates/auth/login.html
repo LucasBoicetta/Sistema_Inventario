@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Iniciar Sesión - SGQ Inventario</title>
+    
+    <!-- Fuente Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS compilado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+
+    <style>
+        /* Override para iconos Material Symbols */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        /* FIX: Problema de autofill blanco en Chrome/Edge */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1a1a1a inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            caret-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
+</head>
+
+<body class="bg-charcoal-gradient text-slate-200 font-display min-h-screen flex items-start justify-center pt-[5vh] pb-6 px-6">
+    
+    <div class="w-full max-w-md">
+
+        <!-- =============================== -->
+        <!-- HEADER: Logo + Branding         -->
+        <!-- =============================== -->
+        <div class="flex flex-col items-center mb-10 text-center">
+            <!-- Icono del Logo -->
+            <div class="size-14 bg-primary rounded-2xl flex items-center justify-center text-charcoal-900 shadow-xl shadow-primary/20 mb-6">
+                <span class="material-symbols-outlined text-3xl font-bold">inventory_2</span>
+            </div>
+            <!-- Nombre del Sistema -->
+            <h1 class="text-3xl font-black text-white tracking-tight mb-2">
+                SGQ <span class="text-primary">Inventario</span>
+            </h1>
+            <p class="text-slate-400 text-sm font-medium">Sistema de Gestión de Inventario</p>
+        </div>
+
+        <!-- =============================== -->
+        <!-- CARD: Formulario de Login       -->
+        <!-- =============================== -->
+        <div class="bg-charcoal-700/50 backdrop-blur-xl border border-white/5 rounded-2xl p-8 shadow-premium">
+            
+            <!-- Título del Card -->
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-white mb-1">Bienvenido</h2>
+                <p class="text-slate-400 text-sm">Ingrese sus credenciales para continuar.</p>
+            </div>
+
+            <!-- Flash Messages (Errores del Backend) -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-6 space-y-2">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }} flex items-center gap-2" role="alert">
+                                <span class="material-symbols-outlined text-base">
+                                    {% if category == 'danger' %}error{% elif category == 'warning' %}warning{% elif category == 'success' %}check_circle{% else %}info{% endif %}
+                                </span>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Formulario -->
+            <form method="POST" 
+                  action="{{ url_for('auth.login') }}" 
+                  id="login-form" 
+                  class="space-y-6" 
+                  novalidate>
+                
+                <!-- CSRF Token (Flask-WTF) -->
+                {{ form.hidden_tag() }}
+
+                <!-- Campo: Cédula -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 px-1" 
+                           for="{{ form.cedula.id }}">
+                        Cédula
+                    </label>
+                    <div class="relative group">
+                        <!-- Icono @ (alternate_email como en la referencia) -->
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-xl">alternate_email</span>
+                        </div>
+                        <!-- Input -->
+                        {{ form.cedula(
+                            class="block w-full bg-charcoal-800 border border-white/5 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none",
+                            placeholder="Ingrese su cédula",
+                            autocomplete="username",
+                            required=true
+                        ) }}
+                    </div>
+                    {% if form.cedula.errors %}
+                        <p class="mt-1.5 text-xs text-red-400 px-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">error</span>
+                            {{ form.cedula.errors[0] }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Campo: Contraseña -->
+                <div>
+                    <!-- Label + Olvidé mi contraseña -->
+                    <div class="flex items-center justify-between mb-2 px-1">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500" 
+                               for="{{ form.password.id }}">
+                            Contraseña
+                        </label>
+                        <a class="text-xs font-semibold text-primary/80 hover:text-primary transition-colors" 
+                           href="{{ url_for('auth.cambiar_contraseña') }}">
+                            ¿Olvidó su contraseña?
+                        </a>
+                    </div>
+                    <div class="relative group">
+                        <!-- Icono Candado -->
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 group-focus-within:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-xl">lock</span>
+                        </div>
+                        <!-- Input -->
+                        {{ form.password(
+                            class="block w-full bg-charcoal-800 border border-white/5 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white placeholder-slate-600 focus:ring-1 focus:ring-primary/50 focus:border-primary/50 transition-all outline-none",
+                            placeholder="••••••••",
+                            autocomplete="current-password",
+                            required=true
+                        ) }}
+                    </div>
+                    {% if form.password.errors %}
+                        <p class="mt-1.5 text-xs text-red-400 px-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-sm">error</span>
+                            {{ form.password.errors[0] }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Mantenerme conectado -->
+                <div class="flex items-center px-1">
+                    <input class="h-4 w-4 rounded border-white/10 bg-charcoal-800 text-primary focus:ring-primary focus:ring-offset-charcoal-900" 
+                           id="remember-me" 
+                           name="remember_me"
+                           type="checkbox">
+                    <label class="ml-3 block text-sm text-slate-400 font-medium" for="remember-me">
+                        Mantenerme conectado
+                    </label>
+                </div>
+
+                <!-- Botón Submit -->
+                <button type="submit" 
+                        id="login-btn"
+                        class="w-full bg-primary hover:bg-yellow-300 text-charcoal-900 py-4 rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="btn-text">Iniciar Sesión</span>
+                    <span class="material-symbols-outlined text-lg" id="btn-icon">arrow_forward</span>
+                    <!-- Spinner (oculto por defecto) -->
+                    <svg id="btn-spinner" class="hidden animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Separador -->
+            <div class="mt-8 pt-6 border-t border-white/5 flex items-center justify-center">
+                <p class="text-xs text-slate-500 font-medium">
+                    Solo personal autorizado.
+                    <a class="text-slate-300 hover:text-primary transition-colors ml-1" href="#">
+                        Directrices de Acceso
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- =============================== -->
+        <!-- FOOTER: Status del Sistema      -->
+        <!-- =============================== -->
+        <footer class="mt-10 flex flex-col items-center gap-4">
+            <div class="flex items-center gap-4 text-[10px] uppercase tracking-[0.2em] font-bold text-slate-600">
+                <span class="flex items-center gap-1.5">
+                    <span class="size-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                    Sistema Activo
+                </span>
+                <span class="w-1 h-1 bg-slate-700 rounded-full"></span>
+                <span>v1.0.0</span>
+                <span class="w-1 h-1 bg-slate-700 rounded-full"></span>
+                <span>Conexión Segura</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <a class="text-xs text-slate-500 hover:text-slate-300 transition-colors" href="#">Centro de Ayuda</a>
+                <a class="text-xs text-slate-500 hover:text-slate-300 transition-colors" href="#">Política de Privacidad</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- =============================== -->
+    <!-- JavaScript: Validación Visual   -->
+    <!-- =============================== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('login-form');
+            const btn = document.getElementById('login-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+            const btnSpinner = document.getElementById('btn-spinner');
+
+            // Estado Loading al enviar
+            form.addEventListener('submit', (e) => {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    highlightEmptyFields();
+                    return;
+                }
+
+                btn.disabled = true;
+                btnText.textContent = 'Verificando...';
+                btnIcon.classList.add('hidden');
+                btnSpinner.classList.remove('hidden');
+            });
+
+            // Resaltar campos vacíos
+            function highlightEmptyFields() {
+                form.querySelectorAll('input[required]').forEach(input => {
+                    if (!input.value.trim()) {
+                        input.classList.add('!border-red-500/50', '!ring-1', '!ring-red-500/30');
+                        
+                        input.addEventListener('input', function handler() {
+                            input.classList.remove('!border-red-500/50', '!ring-1', '!ring-red-500/30');
+                            input.removeEventListener('input', handler);
+                        });
+                    }
+                });
+            }
+
+            // Auto-ocultar flash messages
+            setTimeout(() => {
+                document.querySelectorAll('.flash-message').forEach(el => {
+                    el.style.transition = 'opacity 0.5s ease';
+                    el.style.opacity = '0';
+                    setTimeout(() => el.remove(), 500);
+                });
+            }, 4000);
+        });
+    </script>
+</body>
+</html>

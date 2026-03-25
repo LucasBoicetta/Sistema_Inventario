@@ -1,0 +1,239 @@
+{# ✅ CONFIGURACIÓN DE LAYOUT - IGUAL QUE LA REFERENCIA #}
+{% set layout_max_width = "max-w-4xl" %}
+{% set layout_padding = "p-10" %}
+
+{% extends "base.html" %}
+{% block title %}Cargar Insumo{% endblock %}
+
+{% block header_search %}
+<!-- Breadcrumb en lugar de búsqueda -->
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <a href="{{ url_for('inventory.consultar_inventario') }}" class="hover:text-slate-300 transition-colors">Inventario</a>
+    <span>/</span>
+    <span class="text-slate-200">Cargar Insumo</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<!-- Botón de volver -->
+<a href="{{ url_for('main.index') }}" 
+   class="flex items-center gap-2 px-4 py-2 border border-charcoal-700 bg-charcoal-800 text-slate-200 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors">
+    <span class="material-symbols-outlined text-lg">arrow_back</span>
+    Volver
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================ -->
+<!-- SECCIÓN DE REGLAS (EXACTA A LA REFERENCIA)  -->
+<!-- ============================================ -->
+<section class="bg-charcoal-800/30 border border-charcoal-700/50 rounded-xl p-6">
+    <div class="flex items-center gap-3 mb-4">
+        <span class="material-symbols-outlined text-primary text-xl">info</span>
+        <h2 class="text-sm font-bold text-slate-300 uppercase tracking-widest">Reglas de Entrada & Validación</h2>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="space-y-1">
+            <p class="text-xs font-semibold text-white">1. Auto-Actualización</p>
+            <p class="text-[12px] text-slate-400 leading-relaxed">
+                Si el código ya existe, se actualizará automáticamente el stock actual.
+            </p>
+        </div>
+        <div class="space-y-1">
+            <p class="text-xs font-semibold text-white">2. Insumos Existentes</p>
+            <p class="text-[12px] text-slate-400 leading-relaxed">
+                Para insumos conocidos, solo el Proveedor y Cantidad son obligatorios.
+            </p>
+        </div>
+        <div class="space-y-1">
+            <p class="text-xs font-semibold text-white">3. Nuevo Registro</p>
+            <p class="text-[12px] text-slate-400 leading-relaxed">
+                Los códigos nuevos requieren Descripción completa y nombre del Proveedor.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FORMULARIO (EXACTO A LA REFERENCIA)          -->
+<!-- ============================================ -->
+<section class="bg-charcoal-800/60 border border-charcoal-700 rounded-2xl shadow-2xl overflow-hidden">
+    <div class="px-8 py-8 border-b border-charcoal-700 bg-charcoal-800/40">
+        <h3 class="text-lg font-medium text-white">Detalles del Insumo</h3>
+        <p class="text-sm text-slate-500">Ingrese la información del insumo para carga en almacén.</p>
+    </div>
+    
+    <form method="POST" id="supplyForm" class="px-8 pb-8 space-y-8">
+        {{ form.hidden_tag() }}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Código del Insumo -->
+            <div class="space-y-2">
+                <label for="codigo_producto" class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Código del Insumo
+                </label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none">qr_code</span>
+                    {{ form.codigo_producto(
+                        class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-slate-600 transition-all focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none",
+                        placeholder="ej. INS001",
+                        autocomplete="off",
+                        id="codigo_producto"
+                    ) }}
+                </div>
+                {% if form.codigo_producto.errors %}
+                    <p class="text-xs text-rose-400 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">error</span>
+                        {{ form.codigo_producto.errors[0] }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Nombre del Insumo -->
+            <div class="space-y-2">
+                <label for="descripcion" class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Nombre del Insumo
+                </label>
+                {{ form.descripcion(
+                    class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg px-4 py-3 text-sm text-white placeholder-slate-600 transition-all focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none",
+                    placeholder="Ingrese nombre formal",
+                    autocomplete="off",
+                    id="descripcion"
+                ) }}
+                {% if form.descripcion.errors %}
+                    <p class="text-xs text-rose-400 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">error</span>
+                        {{ form.descripcion.errors[0] }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Cantidad -->
+            <div class="space-y-2">
+                <label for="cantidad_entradas" class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Cantidad
+                </label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none">inventory</span>
+                    {{ form.cantidad_entradas(
+                        class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-slate-600 transition-all focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none",
+                        min="1",
+                        placeholder="0",
+                        id="cantidad_entradas"
+                    ) }}
+                </div>
+                {% if form.cantidad_entradas.errors %}
+                    <p class="text-xs text-rose-400 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">error</span>
+                        {{ form.cantidad_entradas.errors[0] }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Proveedor -->
+            <div class="space-y-2">
+                <label for="proveedor" class="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Proveedor <span class="text-primary">*</span>
+                </label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg pointer-events-none">local_shipping</span>
+                    {{ form.proveedor(
+                        class="w-full bg-charcoal-900 border border-charcoal-700 rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-slate-600 transition-all focus:border-primary focus:ring-1 focus:ring-primary/30 outline-none",
+                        placeholder="Nombre del proveedor",
+                        autocomplete="off",
+                        id="proveedor"
+                    ) }}
+                </div>
+                {% if form.proveedor.errors %}
+                    <p class="text-xs text-rose-400 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">error</span>
+                        {{ form.proveedor.errors[0] }}
+                    </p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Footer del Formulario -->
+        <div class="pt-6 border-t border-charcoal-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2 text-slate-500">
+                <span class="material-symbols-outlined text-sm">verified_user</span>
+                <span class="text-[10px] uppercase font-bold tracking-widest">La entrada será registrada para auditoría</span>
+            </div>
+            <div class="flex items-center gap-4 w-full sm:w-auto">
+                <a href="{{ url_for('main.index') }}" 
+                   class="flex-1 sm:flex-none px-8 py-3 rounded-lg border border-charcoal-700 text-slate-400 text-xs font-bold uppercase tracking-widest hover:bg-charcoal-700 hover:text-white transition-all text-center">
+                    Cancelar
+                </a>
+                <button type="submit" 
+                        class="flex-1 sm:flex-none px-12 py-3 bg-primary text-charcoal-950 rounded-lg font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/10 hover:brightness-110 active:scale-95 transition-all">
+                    Cargar Insumo
+                </button>
+            </div>
+        </div>
+    </form>
+</section>
+
+<!-- JavaScript para UX -->
+<script>
+    // Validación en tiempo real
+    const form = document.getElementById('supplyForm');
+    const requiredFields = ['codigo_producto', 'proveedor', 'cantidad_entradas'];
+
+    form.addEventListener('submit', function(e) {
+        let hasError = false;
+        
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+                field.classList.add('border-rose-500');
+                field.classList.remove('border-charcoal-700');
+                hasError = true;
+            } else {
+                field.classList.remove('border-rose-500');
+                field.classList.add('border-charcoal-700');
+            }
+        });
+
+        if (hasError) {
+            e.preventDefault();
+            const firstError = document.querySelector('.border-rose-500');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        }
+    });
+
+    // Remover borde rojo al escribir
+    document.querySelectorAll('input, select').forEach(field => {
+        field.addEventListener('input', function() {
+            this.classList.remove('border-rose-500');
+            this.classList.add('border-charcoal-700');
+        });
+    });
+
+    // Prevenir doble envío
+    form.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        if (!submitBtn.disabled) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Cargando...';
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            
+            setTimeout(() => {
+                if (!form.checkValidity()) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Cargar Insumo';
+                    submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
+            }, 100);
+        }
+    });
+</script>
+
+{% endblock %}

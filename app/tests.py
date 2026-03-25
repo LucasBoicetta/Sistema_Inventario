@@ -1,7 +1,7 @@
 import random
 from datetime import datetime, timedelta
 from app import app, db
-from app.models import User, Rol, Dependencia, Insumo, Proveedor, SolicitudInsumo, SolicitudDetalle, EntradaInsumo, SalidaInsumo
+from app.shared.models import User, Rol, Dependencia, Insumo, Proveedor, SolicitudInsumo, SolicitudDetalle, EntradaInsumo, SalidaInsumo
 
 def seed_data():
     with app.app_context():
@@ -151,33 +151,48 @@ def seed_data():
         for cod, desc in insumos_data:
             # Stock inicial variado según tipo de insumo
             if 'Toner' in desc or 'Cartucho' in desc or 'Pendrive' in desc:
-                stock = random.randint(10, 30)  # Insumos más caros
+                stock_inicial = random.randint(10, 30)
             elif 'Papel' in desc or 'Resma' in desc:
-                stock = random.randint(100, 300)  # Papel en mayor cantidad
+                stock_inicial = random.randint(100, 300)
             else:
-                stock = random.randint(50, 200)  # Resto
+                stock_inicial = random.randint(50, 200)
             
             insumo = Insumo(
                 codigo_insumo=cod,
                 descripcion=desc,
-                existencias_iniciales_anio=stock,
-                cantidad_entradas=stock,
+                existencias_iniciales_anio=stock_inicial,  # Lo que tenías al inicio del año
+                cantidad_entradas=0,  # ← CORRECCIÓN: Empezar en 0
                 cantidad_salidas=0,
-                stock_actual=stock,
+                stock_actual=stock_inicial,
                 porcentaje_utilizado=0.0
             )
             db.session.add(insumo)
             db.session.flush()
             
-            # Entrada inicial
-            entrada = EntradaInsumo(
-                id_proveedor=random.choice(proveedores).id_proveedor,
-                cantidad=stock,
-                id_insumo=insumo.id,
-                fecha_entrada=datetime.now() - timedelta(days=random.randint(60, 90))
-            )
-            db.session.add(entrada)
+            # Simular 2-5 entradas durante el año
+            num_entradas = random.randint(2, 5)
+            for j in range(num_entradas):
+                if 'Toner' in desc or 'Cartucho' in desc:
+                    cantidad_entrada = random.randint(5, 15)
+                elif 'Papel' in desc or 'Resma' in desc:
+                    cantidad_entrada = random.randint(20, 100)
+                else:
+                    cantidad_entrada = random.randint(10, 50)
+                
+                entrada = EntradaInsumo(
+                    id_proveedor=random.choice(proveedores).id_proveedor,
+                    cantidad=cantidad_entrada,
+                    id_insumo=insumo.id,
+                    fecha_entrada=datetime.now() - timedelta(days=random.randint(30, 150))
+                )
+                db.session.add(entrada)
+                
+                # Actualizar el insumo con la nueva entrada
+                insumo.stock_actual += cantidad_entrada
+                insumo.cantidad_entradas += cantidad_entrada
+            
             insumos.append(insumo)
+
         db.session.commit()
 
         print("Generando 100+ solicitudes y entregas...")

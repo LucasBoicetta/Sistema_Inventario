@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center px-4">
+    <div class="max-w-md w-full text-center">
+        <h1 class="text-9xl font-extrabold text-yellow-500 tracking-widest text-shadow">404</h1>
+        <div class="bg-yellow-400 px-2 text-sm rounded rotate-12 absolute text-black font-bold ml-12 -mt-16">
+            Página No Encontrada
+        </div>
+        <h2 class="text-2xl font-semibold text-white mt-8 mb-4">Lo sentimos, te has perdido.</h2>
+        <p class="text-gray-400 mb-8">La página que buscas no existe, ha sido movida o está temporalmente inactiva.</p>
+        <a href="{{ url_for('main.index') }}" class="inline-block bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 px-6 rounded transition-colors duration-200">
+            Volver al Inicio
+        </a>
+    </div>
+</div>
+{% endblock %}
