@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from sqlalchemy import or_, cast, String, CheckConstraint
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db, login, jwt
+import json
+import enum
 
 # --- Tablas auxiliares ---
 
@@ -177,3 +179,87 @@ class SalidaInsumo(db.Model):
             )
             
         return query.order_by(cls.fecha_salida.desc())
+
+
+# =============================================================================
+# MODELO DE AUDITORÍA
+# =============================================================================
+class AuditAccion(enum.Enum):
+    """Enumeración de acciones auditables en el sistema."""
+    # --- Autenticación ---
+    LOGIN_EXITOSO = "LOGIN_EXITOSO"
+    LOGIN_FALLIDO = "LOGIN_FALLIDO"
+    LOGOUT = "LOGOUT"
+    CAMBIO_CONTRASEÑA = "CAMBIO_CONTRASEÑA"
+
+    # --- Inventario: Entradas ---
+    CARGA_INSUMO = "CARGA_INSUMO"   #Carga individual.
+    CARGA_MULTIPLE = "CARGA_MULTIPLE" #Carga multiple.
+    IMPORTACION_CSV = "IMPORTACION_CSV" #Importación desde CSV.
+
+    # --- Inventario: Salidas ---
+    SALIDA_STOCK = "SALIDA_STOCK"   #Entrega de un item de solicitud.
+
+    # --- Solicitudes ---
+    CREAR_SOLICITUD = "CREAR_SOLICITUD"
+
+    # --- Exportaciones ---
+    EXPORTACION_CSV = "EXPORTACION_CSV"
+
+class AuditEstado(enum.Enum):
+    """Enumeración de estados posibles para una acción auditada."""
+    EXITOSO = "EXITOSO"
+    FALLIDO = "FALLIDO"
+
+class AuditLog(db.Model):
+    """
+    Registro de auditoría de negocio.
+
+     Diferencia con los logs técnicos (sistema_sgq.log):
+    - Este modelo registra QUIÉN hizo QUÉ sobre QUÉ DATO y con qué RESULTADO.
+    - Los logs técnicos registran errores y trazas para debugging.
+    - Este modelo es permanente y consultable por administradores.
+    - Los logs técnicos rotan y son para el equipo de desarrollo/ops.
+    """
+    __tablename__ = 'audit_logs'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    
+    #Cuando ocurrió.
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False, index=True)
+    #Quién lo hizo (nullable: puede ser el sistema o un usuario anónimo).
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario', ondelete='SET NULL'), nullable=True, index = True)
+    #Que acción realizó.
+    accion = db.Column(db.Enum(AuditAccion), nullable=False, index=True)
+    #Sobre que entidad de negocio (ej. Insumo, SolicitudInsumo, etc).
+    entidad_tipo = db.Column(db.String(50), nullable=True)
+    #ID de la entidad afectada (ej. id del insumo modificado).
+    entidad_id = db.Column(db.Integer, nullable=True)
+    #Resultado de la operación.
+    estado = db.Column(db.Enum(AuditEstado), nullable=False, default=AuditEstado.EXITOSO)
+    #Detalles adicionales en JSON: snapshot antes/después, cantidad, errores, etc.
+    #Guardado como texto para maxima compatibilidad (SQLite + PostgreSQL).
+    detalle_json = db.Column(db.Text, nullable=True)
+    #IP del cliente que realizó la acción.
+    ip_address = db.Column(db.String(45), nullable=True)
+
+    #Relación con usuario (lazy para no cargar siempre).
+    usuario = db.relationship('User', foreign_keys=[id_usuario], lazy='select')
+
+    def __repr__(self):
+        return (
+            f"<AuditLog id={self.id} "
+            f"accion={self.accion.value} "
+            f"usuario={self.id_usuario} "
+            f"estado={self.estado.value}>"
+        )
+    
+    @property
+    def detalle(self) -> dict:
+        """Deserializa el JSON de detalle. Retorna dict vacio si no hay datos."""
+        if not self.detalle_json:
+            return {}
+        try:
+            return json.loads(self.detalle_json)
+        except (ValueError, TypeError):
+            return {}
