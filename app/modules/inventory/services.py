@@ -1,7 +1,8 @@
 from app import db
 from app.shared.filters import FilterBuilder
-from app.shared.models import Insumo, EntradaInsumo, Proveedor, SalidaInsumo, User, Dependencia
+from app.shared.models import Insumo, EntradaInsumo, Proveedor, SalidaInsumo, User, Dependencia, AuditAccion, AuditEstado
 from app.shared.errors import DomainError, InvalidProductError, InsufficientStockError
+from app.shared.audit import AuditService
 from .validators import InsumoValidator, InsumoInput
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
@@ -82,6 +83,8 @@ class InventoryService:
     def cargar_insumos(codigo_insumo, cantidad, nombre_proveedor, descripcion=None):
         """
         Registra una entrada de insumos individual (método original refactorizado).
+
+        Auditoría: registra CARGA_INSUMO con snapshot de stock antes/después.
         """
         #1.Crear input y validar.
         insumo_input = InsumoInput(
@@ -95,6 +98,15 @@ class InventoryService:
 
         if not resultado.is_valid:
             logger.warning(f"Validación fallida: {resultado.error_message}")
+            #Auditamos el intento fallido por validacion.
+            AuditService.log_fallido(
+                accion=AuditAccion.CARGA_INSUMO,
+                entidad_tipo="Insumo",
+                detalle ={
+                    "codigo_intentado": codigo_insumo,
+                    "motivo_fallo": resultado.error_message
+                }
+            )
             raise InvalidProductError(resultado.error_message)
         
         #2.Logging de auditoría.
@@ -106,8 +118,28 @@ class InventoryService:
             #3.Gestionar proveedor.
             proveedor = InventoryService._get_or_create_proveedor(normalized.proveedor)
 
+            # Capturamos stock antes para el snapshot.
+            insumo_existente = db.session.scalar(sa.select(Insumo).where(Insumo.codigo_insumo == normalized.codigo))
+            stock_antes = insumo_existente.stock_actual if insumo_existente else 0
+
             #4.Procesar insumo.
             insumo, es_nuevo = InventoryService._procesar_insumo_individual(normalized, proveedor)
+            
+            #Auditoria antes del commit (dentro de la misma transacción).
+            AuditService.log(
+                accion=AuditAccion.CARGA_INSUMO,
+                entidad_tipo="Insumo",
+                entidad_id=insumo.id,
+                detalle={
+                    "codigo": insumo.codigo_insumo,
+                    "descripcion": insumo.descripcion,
+                    "proveedor": proveedor.nombre,
+                    "cantidad_cargada": normalized.cantidad,
+                    "es_nuevo": es_nuevo,
+                    "stock_antes": stock_antes,
+                    "stock_despues": insumo.stock_actual
+                }
+            )
 
             #5.Commit final.
             db.session.commit()
@@ -149,6 +181,9 @@ class InventoryService:
                 'insumos_creados': List[int],
                 'insumos_actualizados': List[int]
             }
+        
+        Auditoría: registra un evento CARGA_MULTIPLE con resumen del batch.
+        No registra un evento por cada insumo (sería ruidoso).
         """
         logger.info(f"Iniciando carga múltiple de {len(insumos_input)} insumos.")
 
@@ -157,6 +192,14 @@ class InventoryService:
 
         if not insumos_validos:
             logger.warning("Carga múltiple cancelada: Ningún insumo pasó validación.")
+            AuditService.log_fallido(
+                accion=AuditAccion.CARGA_MULTIPLE,
+                detalle={
+                    "total_enviados": len(insumos_input),
+                    "motivo_fallo": "Ningún insumo válido",
+                    "errores": errores[:10],
+                }
+            )
             return {
                 'exitosos': 0,
                 'fallidos': len(errores),
@@ -169,6 +212,8 @@ class InventoryService:
             creados = []
             actualizados = []
             proveedores_cache = {} #Cache para evitar consultas repetidas de proveedores.
+            #Guardamos snapshots para el detalle de auditoría.
+            snapshots = []
 
             #2.Procesar en una sola transacción.
             for insumo_input in insumos_validos:
@@ -179,14 +224,39 @@ class InventoryService:
                 
                 proveedor = proveedores_cache[insumo_input.proveedor]
 
+                #Stock antes.
+                insumo_existente = db.session.scalar(sa.select(Insumo).where(Insumo.codigo_insumo == insumo_input.codigo))
+                stock_antes = insumo_existente.stock_actual if insumo_existente else 0
+                
                 #Procesar insumo.
                 insumo, es_nuevo = InventoryService._procesar_insumo_individual(insumo_input, proveedor)
+
+                snapshots.append({
+                    "codigo": insumo.codigo_insumo,
+                    "cantidad_cargada": insumo_input.cantidad,
+                    "es_nuevo": es_nuevo,
+                    "stock_antes": stock_antes,
+                    "stock_despues": insumo.stock_actual,
+                })
 
                 if es_nuevo:
                     creados.append(insumo.id)
                 else:
                     actualizados.append(insumo.id)
                 
+            #Un único evento de auditoría para todo el batch.
+            AuditService.log(
+                accion=AuditAccion.CARGA_MULTIPLE,
+                detalle={
+                    "total_enviados": len(insumos_input),
+                    "exitosos": len(creados) + len(actualizados),
+                    "fallidos": len(errores),
+                    "insumos_creados": len(creados),
+                    "insumos_actualizados": len(actualizados),
+                    "detalle_insumos": snapshots
+                }
+            )
+
             #3.Commit único.
             db.session.commit()
 
@@ -210,64 +280,65 @@ class InventoryService:
     def importar_desde_csv(archivo_stream, filename: str) -> dict:
         """
         Importa insumos desde archivo CSV/Excel.
-
-        Args:
-            archivo_stream: FileStorage de Flask.
-            filename: Nombre del archivo para detectar formato.
-        
-        Returns:
-            Dict con resultados de la importación.
+ 
+        AUDITORÍA: registra IMPORTACION_CSV con el nombre del archivo y totales.
         """
         logger.info(f"Iniciando importación desde archivo: {filename}")
-
+ 
         try:
-            #1.Detectar formato y leer archivo.
             if filename.endswith('.xlsx') or filename.endswith('.xls'):
                 df = pd.read_excel(archivo_stream, engine='openpyxl')
             elif filename.endswith('.csv'):
                 df = pd.read_csv(archivo_stream, encoding='utf-8-sig')
             else:
                 raise InvalidProductError("Formato de archivo no soportado. Use CSV o Excel.")
-            
-            #2.Validar columnas requeridas.
+ 
             columnas_requeridas = ['codigo', 'cantidad', 'proveedor']
-            columnas_opcionales = ['descripcion', 'nombre']
-
             columnas_faltantes = [col for col in columnas_requeridas if col not in df.columns]
             if columnas_faltantes:
                 raise InvalidProductError(
                     f"Columnas faltantes en el archivo: {', '.join(columnas_faltantes)}. "
                     f"Requeridas: {', '.join(columnas_requeridas)}"
                 )
-
-            #3.Convertir dataframe a lista de InsumoInput.
+ 
             insumos_input = []
             for idx, row in df.iterrows():
-                #Usar 'descripcion' o 'nombre' para la descripción del insumo.
                 descripcion = (
-                    row.get('descripcion') or
-                    row.get('nombre') or
-                    row.get('Descripcion') or
-                    row.get('Nombre')
+                    row.get('descripcion') or row.get('nombre') or
+                    row.get('Descripcion') or row.get('Nombre')
                 )
-
                 insumo = InsumoInput(
                     codigo=str(row['codigo']).strip(),
                     descripcion=str(descripcion).strip() if pd.notna(descripcion) else None,
                     cantidad=int(row['cantidad']) if pd.notna(row['cantidad']) else 0,
                     proveedor=str(row['proveedor']).strip() if pd.notna(row['proveedor']) else '',
-                    fila=idx + 2  # +2 para ajustar por header y base 0.
+                    fila=idx + 2
                 )
                 insumos_input.append(insumo)
-            
-            logger.info(f"Archivo parseado: {len(insumos_input)} insumos encontrados. Iniciando validación.")
-            
-            #4.Delegar a carga múltiple.
+ 
+            logger.info(
+                f"Archivo parseado: {len(insumos_input)} insumos encontrados. "
+                f"Iniciando validación."
+            )
+ 
             resultado = InventoryService.cargar_insumos_multiple(insumos_input)
             resultado['total_filas'] = len(insumos_input)
-
+ 
+            # ← Auditoría de la importación (complementa al evento CARGA_MULTIPLE)
+            AuditService.log(
+                accion=AuditAccion.IMPORTACION_CSV,
+                estado=AuditEstado.EXITOSO if resultado['exitosos'] > 0 else AuditEstado.FALLIDO,
+                detalle={
+                    "nombre_archivo": filename,
+                    "total_filas": len(insumos_input),
+                    "exitosos": resultado['exitosos'],
+                    "fallidos": resultado['fallidos'],
+                }
+            )
+            db.session.commit()
+ 
             return resultado
-
+ 
         except pd.errors.EmptyDataError:
             raise InvalidProductError("El archivo está vacío.")
         except pd.errors.ParserError as e:
@@ -281,6 +352,8 @@ class InventoryService:
     def registrar_salidas(id_insumo, cantidad, id_usuario, observaciones=None, id_detalle_solicitud=None):
         """ Registra una salida de stock (Descargo)
         Utiliza bloqueo pesimista en la BD para evitar errores de concurrencia.
+
+        Auditoría: registra SALIDA_STOCK con snapshot de stock antes/después.
         """
         #1. Logging de Auditoría.
         logger.info(f"Solicitud de salida: Insumo ID {id_insumo}, Cantidad {cantidad}, Usuario ID {id_usuario}")
@@ -304,6 +377,9 @@ class InventoryService:
                 logger.warning(f"Stock insuficiente: Insumo {insumo.codigo_insumo}, Solicitado {cantidad}, Disponible {insumo.stock_actual}")
                 raise InsufficientStockError(insumo.codigo_insumo, cantidad,insumo.stock_actual)
             
+            #Snapshot antes del descuento.
+            stock_antes = insumo.stock_actual
+            
             #5. Actualización de stock.
             insumo.stock_actual -= cantidad
             insumo.cantidad_salidas = (insumo.cantidad_salidas or 0) + cantidad
@@ -317,6 +393,23 @@ class InventoryService:
                 id_solicitudes_insumos=id_detalle_solicitud
             )
             db.session.add(salida)
+
+            #Auditoría dentro de la misma transacción.
+            AuditService.log(
+                accion = AuditAccion.SALIDA_STOCK,
+                entidad_tipo = "Insumo",
+                entidad_id = id_insumo,
+                detalle = {
+                    "codigo": insumo.codigo_insumo,
+                    "descripcion": insumo.descripcion,
+                    "cantidad_entregada": cantidad,
+                    "id_usuario_receptor": id_usuario,
+                    "id_detalle_solicitud": id_detalle_solicitud,
+                    "observaciones": observaciones,
+                    "stock_antes": stock_antes,
+                    "stock_despues": insumo.stock_actual
+                }
+            )
 
             #7. Commit final.
             db.session.commit()
