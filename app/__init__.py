@@ -56,6 +56,8 @@ app.register_blueprint(orders_bp)
 from app.modules.main import main_bp
 app.register_blueprint(main_bp)
 
+from app.modules.audit import audit_bp
+app.register_blueprint(audit_bp)
 
 #5. Context Processors (Inyección global de variables en templates).
 @app.context_processor
