@@ -1,0 +1,640 @@
+{% extends "base.html" %}
+{% block title %}Auditoría{% endblock %}
+
+{% block header_search %}
+<div class="text-sm text-slate-500 flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">home</span>
+    <span>/</span>
+    <span class="text-slate-200">Auditoría del Sistema</span>
+</div>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('audit.exportar_audit_csv', **filtros) }}"
+   class="flex items-center gap-2 px-4 py-2 border border-charcoal-700 bg-charcoal-800 text-slate-200 rounded-lg text-sm font-medium hover:bg-charcoal-700 transition-colors">
+    <span class="material-symbols-outlined text-lg">download</span>
+    Exportar CSV
+</a>
+{% endblock %}
+
+{% block content %}
+
+{# ============================================================ #}
+{# TÍTULO                                                        #}
+{# ============================================================ #}
+<section>
+    <div class="space-y-1">
+        <h1 class="text-4xl font-light text-white tracking-tight">
+            Registro de <span class="font-bold text-primary">Auditoría</span>
+        </h1>
+        <p class="text-slate-500 text-sm">
+            {{ pagination.total }} evento{{ 's' if pagination.total != 1 else '' }} registrado{{ 's' if pagination.total != 1 else '' }}
+            {% if params.has_filters() %} — filtros activos{% endif %}
+        </p>
+    </div>
+</section>
+
+{# ============================================================ #}
+{# FILTROS                                                       #}
+{# ============================================================ #}
+<section>
+    <form method="GET" action="{{ url_for('audit.audit_logs') }}"
+          class="bg-charcoal-900/50 border border-charcoal-700/50 rounded-xl p-6 space-y-4">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            {# Búsqueda por usuario #}
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Usuario
+                </label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">
+                        person_search
+                    </span>
+                    <input type="text" name="filtro" value="{{ filtros.filtro }}"
+                           placeholder="Nombre o cédula..."
+                           autocomplete="off"
+                           class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 placeholder-slate-500 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
+                </div>
+            </div>
+
+            {# Acción #}
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Acción
+                </label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">
+                        bolt
+                    </span>
+                    <select name="accion"
+                            class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-8 py-2.5 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none appearance-none">
+                        <option value="">Todas las acciones</option>
+                        {% for accion in acciones %}
+                        <option value="{{ accion.value }}"
+                                {% if filtros.accion == accion.value %}selected{% endif %}>
+                            {{ accion.value | replace('_', ' ') | title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-lg">expand_more</span>
+                </div>
+            </div>
+
+            {# Estado #}
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Estado
+                </label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">
+                        verified
+                    </span>
+                    <select name="estado"
+                            class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-8 py-2.5 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none appearance-none">
+                        <option value="">Todos los estados</option>
+                        {% for estado in estados %}
+                        <option value="{{ estado.value }}"
+                                {% if filtros.estado == estado.value %}selected{% endif %}>
+                            {{ estado.value | title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none text-lg">expand_more</span>
+                </div>
+            </div>
+
+            {# Rango de fechas — desde #}
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Desde
+                </label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">
+                        calendar_today
+                    </span>
+                    <input type="date" name="fecha_desde" value="{{ filtros.fecha_desde }}"
+                           class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
+                </div>
+            </div>
+
+            {# Rango de fechas — hasta #}
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Hasta
+                </label>
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors text-lg">
+                        event
+                    </span>
+                    <input type="date" name="fecha_hasta" value="{{ filtros.fecha_hasta }}"
+                           class="w-full bg-charcoal-800 border border-charcoal-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-300 focus:ring-1 focus:ring-primary/40 focus:border-primary/40 transition-all outline-none"/>
+                </div>
+            </div>
+        </div>
+
+        {# Botones #}
+        <div class="flex gap-3 pt-2">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-charcoal-950 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-primary/20">
+                <span class="material-symbols-outlined text-sm">filter_alt</span>
+                Filtrar
+            </button>
+            <a href="{{ url_for('audit.audit_logs') }}"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-charcoal-800 hover:bg-rose-600 text-slate-400 hover:text-white border border-charcoal-700 hover:border-rose-600 rounded-lg text-xs font-bold uppercase tracking-wider transition-all">
+                <span class="material-symbols-outlined text-sm">refresh</span>
+                Limpiar
+            </a>
+        </div>
+    </form>
+</section>
+
+{# ============================================================ #}
+{# LAYOUT: Tabla + Panel lateral                                 #}
+{# El panel arranca oculto (translate-x-full) y se activa por JS #}
+{# ============================================================ #}
+<section class="relative flex gap-6">
+
+    {# ---- TABLA ---- #}
+    <div class="flex-1 min-w-0 surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl overflow-hidden transition-all duration-300" id="audit-table-wrapper">
+
+        {% if logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-charcoal-700 bg-charcoal-950/40">
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Timestamp</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Usuario</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Acción</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">Entidad</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Estado</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500">IP</th>
+                        <th class="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-charcoal-800/50">
+                    {% for log in logs %}
+                    <tr class="transition-colors hover:bg-white/[0.03] cursor-pointer audit-row group"
+                        data-log-id="{{ log.id }}"
+                        data-timestamp="{{ log.timestamp.strftime('%d/%m/%Y %H:%M:%S') if log.timestamp else '' }}"
+                        data-usuario="{{ log.usuario.nombre if log.usuario else 'Sistema' }}"
+                        data-cedula="{{ log.usuario.cedula if log.usuario else '-' }}"
+                        data-accion="{{ log.accion.value if log.accion else '' }}"
+                        data-entidad-tipo="{{ log.entidad_tipo or '' }}"
+                        data-entidad-id="{{ log.entidad_id or '' }}"
+                        data-estado="{{ log.estado.value if log.estado else '' }}"
+                        data-ip="{{ log.ip_address or '' }}"
+                        data-detalle="{{ log.detalle_json | e if log.detalle_json else '{}' }}">
+
+                        {# Timestamp #}
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-white font-mono">
+                                    {{ log.timestamp.strftime('%d/%m/%Y') if log.timestamp else '-' }}
+                                </span>
+                                <span class="text-[10px] text-slate-500 font-mono">
+                                    {{ log.timestamp.strftime('%H:%M:%S') if log.timestamp else '' }}
+                                </span>
+                            </div>
+                        </td>
+
+                        {# Usuario #}
+                        <td class="px-6 py-4">
+                            {% if log.usuario %}
+                            <div class="flex items-center gap-2">
+                                <div class="size-7 rounded bg-charcoal-700 border border-charcoal-600 flex items-center justify-center flex-shrink-0">
+                                    <span class="text-[10px] font-bold text-white">
+                                        {{ log.usuario.nombre[0] | upper }}
+                                    </span>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-white truncate">{{ log.usuario.nombre }}</p>
+                                    <p class="text-[10px] text-slate-500 font-mono">{{ log.usuario.cedula }}</p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-xs text-slate-500 italic">Sistema</span>
+                            {% endif %}
+                        </td>
+
+                        {# Acción con color semántico #}
+                        <td class="px-6 py-4">
+                            {% set accion_val = log.accion.value if log.accion else '' %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide
+                                {% if 'LOGIN' in accion_val %}bg-blue-500/10 text-blue-400 border border-blue-500/20
+                                {% elif 'SALIDA' in accion_val or 'CARGA' in accion_val or 'IMPORTACION' in accion_val %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                                {% elif 'CONTRASEÑA' in accion_val %}bg-amber-500/10 text-amber-400 border border-amber-500/20
+                                {% elif 'SOLICITUD' in accion_val %}bg-violet-500/10 text-violet-400 border border-violet-500/20
+                                {% else %}bg-charcoal-700 text-slate-400 border border-charcoal-600{% endif %}">
+                                {{ accion_val | replace('_', ' ') }}
+                            </span>
+                        </td>
+
+                        {# Entidad #}
+                        <td class="px-6 py-4">
+                            {% if log.entidad_tipo %}
+                            <div class="flex flex-col">
+                                <span class="text-xs font-medium text-slate-300">{{ log.entidad_tipo }}</span>
+                                {% if log.entidad_id %}
+                                <span class="text-[10px] text-slate-500 font-mono">#{{ log.entidad_id }}</span>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <span class="text-slate-600 text-xs">—</span>
+                            {% endif %}
+                        </td>
+
+                        {# Estado #}
+                        <td class="px-6 py-4 text-center">
+                            {% if log.estado and log.estado.value == 'EXITOSO' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
+                                <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                Exitoso
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">
+                                <span class="size-1.5 rounded-full bg-rose-500"></span>
+                                Fallido
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        {# IP #}
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-mono text-slate-400">
+                                {{ log.ip_address or '—' }}
+                            </span>
+                        </td>
+
+                        {# Botón ver detalle #}
+                        <td class="px-6 py-4 text-center">
+                            <button type="button"
+                                    class="btn-open-panel inline-flex items-center justify-center size-8 rounded-lg bg-charcoal-700/50 hover:bg-primary/20 hover:text-primary text-slate-400 border border-charcoal-600 hover:border-primary/40 transition-all"
+                                    title="Ver detalle">
+                                <span class="material-symbols-outlined text-sm">open_in_new</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Paginación #}
+        <div class="px-6 py-5 border-t border-charcoal-700 bg-charcoal-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-xs text-slate-500 font-medium">
+                Página {{ pagination.page }} de {{ pagination.pages }}
+                <span class="text-white font-semibold">({{ pagination.total }} evento{{ 's' if pagination.total != 1 else '' }})</span>
+            </p>
+            <div class="flex items-center gap-2">
+                {% if pagination.has_prev %}
+                    <a href="{{ url_for('audit.audit_logs', page=pagination.prev_num, **filtros) }}"
+                       class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                        <span class="material-symbols-outlined text-xl">chevron_left</span>
+                    </a>
+                {% else %}
+                    <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                        <span class="material-symbols-outlined text-xl">chevron_left</span>
+                    </button>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == pagination.page %}
+                            <span class="flex items-center justify-center size-9 rounded-lg bg-primary text-charcoal-950 font-bold text-xs shadow-lg shadow-primary/10">
+                                {{ page_num }}
+                            </span>
+                        {% else %}
+                            <a href="{{ url_for('audit.audit_logs', page=page_num, **filtros) }}"
+                               class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 text-slate-400 hover:border-slate-500 hover:text-white transition-all text-xs font-bold">
+                                {{ page_num }}
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-slate-600 px-1">...</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                    <a href="{{ url_for('audit.audit_logs', page=pagination.next_num, **filtros) }}"
+                       class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-400 hover:text-white transition-all">
+                        <span class="material-symbols-outlined text-xl">chevron_right</span>
+                    </a>
+                {% else %}
+                    <button disabled class="flex items-center justify-center size-9 rounded-lg border border-charcoal-700 bg-charcoal-800 text-slate-600 cursor-not-allowed opacity-50">
+                        <span class="material-symbols-outlined text-xl">chevron_right</span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        {% else %}
+        {# Estado vacío #}
+        <div class="px-6 py-20 text-center">
+            <div class="flex flex-col items-center gap-4">
+                <div class="size-16 bg-charcoal-800 border border-charcoal-700 rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-charcoal-600">manage_search</span>
+                </div>
+                <div class="space-y-1">
+                    <p class="text-white font-medium">Sin registros</p>
+                    <p class="text-slate-500 text-sm">
+                        {% if params.has_filters() %}
+                            No se encontraron eventos con los filtros actuales.
+                        {% else %}
+                            Aún no hay eventos de auditoría registrados.
+                        {% endif %}
+                    </p>
+                </div>
+                {% if params.has_filters() %}
+                <a href="{{ url_for('audit.audit_logs') }}"
+                   class="text-primary text-xs hover:underline font-medium">Limpiar filtros</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ============================================================ #}
+    {# PANEL LATERAL DE DETALLE                                      #}
+    {# Arranca oculto fuera del viewport (translate-x-full).        #}
+    {# JS lo activa agregando la clase 'panel-open'.                #}
+    {# ============================================================ #}
+    <aside id="detail-panel"
+           class="w-0 overflow-hidden flex-shrink-0 transition-all duration-300 ease-in-out"
+           aria-hidden="true">
+
+        <div class="w-96 h-full surface-gradient border border-charcoal-700/50 rounded-2xl shadow-xl flex flex-col overflow-hidden">
+
+            {# Header del panel #}
+            <div class="flex items-center justify-between px-5 py-4 border-b border-charcoal-700 bg-charcoal-950/40 flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-lg">policy</span>
+                    <h2 class="text-sm font-bold text-white">Detalle del Evento</h2>
+                </div>
+                <button id="btn-close-panel"
+                        class="size-7 rounded-lg bg-charcoal-700 hover:bg-charcoal-600 text-slate-400 hover:text-white transition-all flex items-center justify-center">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+
+            {# Contenido del panel — llenado por JS #}
+            <div id="panel-content" class="flex-1 overflow-y-auto p-5 space-y-5 text-sm">
+                <p class="text-slate-500 text-center mt-8">Seleccioná una fila para ver el detalle.</p>
+            </div>
+        </div>
+    </aside>
+
+</section>
+
+
+{# ============================================================ #}
+{# JAVASCRIPT                                                    #}
+{# ============================================================ #}
+<script>
+(function () {
+    'use strict';
+
+    const tableWrapper = document.getElementById('audit-table-wrapper');
+    const panel        = document.getElementById('detail-panel');
+    const panelContent = document.getElementById('panel-content');
+    const btnClose     = document.getElementById('btn-close-panel');
+
+    // Mapeo de colores semánticos para las acciones (espejo del template Jinja)
+    const accionClases = {
+        LOGIN:      'bg-blue-500/10 text-blue-400 border-blue-500/20',
+        SALIDA:     'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        CARGA:      'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        IMPORTACION:'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        CONTRASEÑA: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+        SOLICITUD:  'bg-violet-500/10 text-violet-400 border-violet-500/20',
+        DEFAULT:    'bg-charcoal-700 text-slate-400 border-charcoal-600',
+    };
+
+    function getAccionClase(accion) {
+        for (const [key, cls] of Object.entries(accionClases)) {
+            if (accion.includes(key)) return cls;
+        }
+        return accionClases.DEFAULT;
+    }
+
+    // ------------------------------------------------------------------
+    // Formatea el JSON de detalle en una lista de pares clave/valor
+    // con nombres legibles y formato apropiado por tipo de dato.
+    // ------------------------------------------------------------------
+    function renderDetalle(jsonStr) {
+        let data;
+        try {
+            data = JSON.parse(jsonStr);
+        } catch {
+            return `<p class="text-slate-400 text-xs font-mono break-all">${jsonStr}</p>`;
+        }
+
+        if (!data || Object.keys(data).length === 0) {
+            return '<p class="text-slate-500 italic text-xs">Sin datos adicionales.</p>';
+        }
+
+        // Mapeo de claves técnicas a nombres legibles
+        const labels = {
+            codigo:               'Código',
+            descripcion:          'Descripción',
+            proveedor:            'Proveedor',
+            cantidad_cargada:     'Cantidad cargada',
+            cantidad_entregada:   'Cantidad entregada',
+            es_nuevo:             'Insumo nuevo',
+            stock_antes:          'Stock antes',
+            stock_despues:        'Stock después',
+            motivo:               'Motivo',
+            motivo_fallo:         'Motivo del fallo',
+            cedula:               'Cédula',
+            cedula_intentada:     'Cédula intentada',
+            nombre:               'Nombre',
+            rol:                  'Rol',
+            nombre_archivo:       'Archivo importado',
+            total_filas:          'Total filas',
+            exitosos:             'Exitosos',
+            fallidos:             'Fallidos',
+            insumos_creados:      'Insumos creados',
+            insumos_actualizados: 'Actualizados',
+            resultado:            'Resultado',
+            id_usuario_receptor:  'ID usuario receptor',
+            id_detalle_solicitud: 'ID detalle solicitud',
+            observaciones:        'Observaciones',
+        };
+
+        const items = Object.entries(data)
+            .filter(([k]) => !['detalle_insumos', '_error_serializacion'].includes(k))
+            .map(([key, value]) => {
+                const label = labels[key] || key.replace(/_/g, ' ');
+                let displayValue;
+
+                if (typeof value === 'boolean') {
+                    displayValue = value
+                        ? '<span class="text-emerald-400 font-semibold">Sí</span>'
+                        : '<span class="text-slate-500">No</span>';
+                } else if (key === 'stock_antes' || key === 'stock_despues') {
+                    const colorClass = key === 'stock_despues' ? 'text-primary font-bold' : 'text-slate-300';
+                    displayValue = `<span class="${colorClass}">${value}</span>`;
+                } else if (key.includes('motivo') || key === 'resultado') {
+                    const clean = String(value).replace(/_/g, ' ');
+                    displayValue = `<span class="capitalize">${clean}</span>`;
+                } else {
+                    displayValue = `<span class="text-slate-200">${value ?? '—'}</span>`;
+                }
+
+                return `
+                    <div class="flex items-start justify-between gap-3 py-2 border-b border-charcoal-700/50 last:border-0">
+                        <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold flex-shrink-0 pt-0.5">${label}</span>
+                        <span class="text-xs text-right">${displayValue}</span>
+                    </div>`;
+            });
+
+        // Detalle anidado (batch de múltiples insumos)
+        let batchSection = '';
+        if (data.detalle_insumos && Array.isArray(data.detalle_insumos) && data.detalle_insumos.length) {
+            const rows = data.detalle_insumos.map(item => `
+                <tr class="border-b border-charcoal-700/40 last:border-0">
+                    <td class="py-1.5 pr-3 text-xs font-mono text-primary/80">${item.codigo || ''}</td>
+                    <td class="py-1.5 pr-3 text-xs text-center text-slate-300">${item.cantidad_cargada ?? ''}</td>
+                    <td class="py-1.5 pr-3 text-xs text-center text-slate-500">${item.stock_antes ?? ''}</td>
+                    <td class="py-1.5 text-xs text-center text-primary font-semibold">${item.stock_despues ?? ''}</td>
+                </tr>`).join('');
+
+            batchSection = `
+                <div class="mt-4">
+                    <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2">
+                        Insumos del batch (${data.detalle_insumos.length})
+                    </p>
+                    <div class="overflow-x-auto rounded-lg border border-charcoal-700">
+                        <table class="w-full text-left">
+                            <thead class="bg-charcoal-950/60">
+                                <tr>
+                                    <th class="py-1.5 pr-3 text-[9px] uppercase tracking-wider text-slate-500 font-bold pl-2">Código</th>
+                                    <th class="py-1.5 pr-3 text-[9px] uppercase tracking-wider text-slate-500 font-bold text-center">Cant.</th>
+                                    <th class="py-1.5 pr-3 text-[9px] uppercase tracking-wider text-slate-500 font-bold text-center">Antes</th>
+                                    <th class="py-1.5 text-[9px] uppercase tracking-wider text-slate-500 font-bold text-center">Después</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-charcoal-700/30 px-2">${rows}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+        }
+
+        return items.join('') + batchSection;
+    }
+
+    // ------------------------------------------------------------------
+    // Abre el panel lateral con los datos de la fila seleccionada
+    // ------------------------------------------------------------------
+    function openPanel(row) {
+        const d = row.dataset;
+        const accion  = d.accion  || '';
+        const estado  = d.estado  || '';
+        const clsAccion = getAccionClase(accion);
+        const isExitoso = estado === 'EXITOSO';
+
+        panelContent.innerHTML = `
+            <!-- Resumen compacto del evento -->
+            <div class="space-y-3">
+
+                <!-- Acción + estado -->
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded border text-[10px] font-bold uppercase tracking-wide ${clsAccion}">
+                        ${accion.replace(/_/g, ' ')}
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border
+                        ${isExitoso
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}">
+                        <span class="size-1.5 rounded-full ${isExitoso ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+                        ${estado}
+                    </span>
+                </div>
+
+                <!-- Timestamp + IP -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-charcoal-800/50 rounded-lg p-3 border border-charcoal-700/50">
+                        <p class="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-1">Timestamp</p>
+                        <p class="text-xs font-mono text-white">${d.timestamp || '—'}</p>
+                    </div>
+                    <div class="bg-charcoal-800/50 rounded-lg p-3 border border-charcoal-700/50">
+                        <p class="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-1">IP Address</p>
+                        <p class="text-xs font-mono text-slate-300">${d.ip || '—'}</p>
+                    </div>
+                </div>
+
+                <!-- Usuario -->
+                <div class="bg-charcoal-800/50 rounded-lg p-3 border border-charcoal-700/50 flex items-center gap-3">
+                    <div class="size-9 rounded-lg bg-charcoal-700 border border-charcoal-600 flex items-center justify-center flex-shrink-0">
+                        <span class="text-sm font-bold text-white">${(d.usuario || 'S')[0].toUpperCase()}</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">${d.usuario || 'Sistema'}</p>
+                        ${d.cedula && d.cedula !== '-'
+                            ? `<p class="text-[10px] text-slate-500 font-mono">Cédula: ${d.cedula}</p>`
+                            : ''}
+                    </div>
+                </div>
+
+                <!-- Entidad afectada -->
+                ${d.entidadTipo ? `
+                <div class="bg-charcoal-800/50 rounded-lg p-3 border border-charcoal-700/50">
+                    <p class="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-1">Entidad afectada</p>
+                    <p class="text-xs text-slate-300">
+                        ${d.entidadTipo}
+                        ${d.entidadId ? `<span class="font-mono text-primary ml-1">#${d.entidadId}</span>` : ''}
+                    </p>
+                </div>` : ''}
+            </div>
+
+            <!-- Separador -->
+            <div class="border-t border-charcoal-700/50 pt-4">
+                <p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-3">
+                    Datos del evento
+                </p>
+                ${renderDetalle(d.detalle || '{}')}
+            </div>
+        `;
+
+        // Abrir panel: expand width
+        panel.classList.remove('w-0');
+        panel.classList.add('w-96');
+        panel.setAttribute('aria-hidden', 'false');
+
+        // Marcar fila activa
+        document.querySelectorAll('.audit-row').forEach(r => r.classList.remove('bg-primary/5', 'border-l-2', 'border-primary'));
+        row.classList.add('bg-primary/5');
+    }
+
+    function closePanel() {
+        panel.classList.remove('w-96');
+        panel.classList.add('w-0');
+        panel.setAttribute('aria-hidden', 'true');
+        document.querySelectorAll('.audit-row').forEach(r => r.classList.remove('bg-primary/5'));
+    }
+
+    // Delegación de eventos en la tabla
+    document.querySelectorAll('.audit-row').forEach(row => {
+        row.addEventListener('click', (e) => {
+            // Evitar que el click en el botón se propague dos veces
+            if (e.target.closest('.btn-open-panel') || e.target.tagName === 'A') {
+                openPanel(row);
+                return;
+            }
+            // Click en cualquier parte de la fila también abre el panel
+            openPanel(row);
+        });
+    });
+
+    btnClose?.addEventListener('click', closePanel);
+
+    // Cerrar con Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePanel();
+    });
+
+}());
+</script>
+
+{% endblock %}

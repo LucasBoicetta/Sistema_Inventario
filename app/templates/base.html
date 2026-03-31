@@ -218,7 +218,17 @@
                 <div class="pt-8 pb-3">
                     <p class="px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Sistema</p>
                 </div>
-
+                
+                <a href="{{ url_for('audit.audit_logs') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+                    {% if request.endpoint == 'audit.audit_logs' %}
+                        bg-charcoal-800 text-primary border-l-2 border-primary shadow-sm
+                    {% else %}
+                        text-slate-400 hover:text-slate-200 hover:bg-charcoal-800
+                    {% endif %}">
+                     <span class="material-symbols-outlined">policy</span>
+                     <span class="text-sm font-medium">Auditoría</span>
+                </a>
                 <a href="{{ url_for('auth.cambiar_contraseña') }}" 
                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                    {% if request.endpoint == 'auth.cambiar_contraseña' %}
